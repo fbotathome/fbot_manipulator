@@ -122,6 +122,8 @@
         <robot_param>robot_description</robot_param>
         <robot_param_node>robot_state_publisher</robot_param_node>
         <parameters>$(find interbotix_xsarm_sim)/config/trajectory_controllers/${robot_model}_trajectory_controllers.yaml</parameters>
+        <parameters>$(find boris_head_description)/config/head_controllers_ros2.yaml</parameters>
+        <parameters>$(find sensors_description)/config/camera_controllers_ros2.yaml</parameters>
       </plugin>
 
     </gazebo>
