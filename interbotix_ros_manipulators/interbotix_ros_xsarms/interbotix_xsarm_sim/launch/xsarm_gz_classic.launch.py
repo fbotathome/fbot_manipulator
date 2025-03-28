@@ -131,9 +131,9 @@ def launch_setup(context, *args, **kwargs):
             '-entity', 'robot_description',
             '-topic', f'{robot_name_launch_arg.perform(context)}/robot_description',
             '-x', '0.0',
-            '-y', '0.0',
+            '-y', '1.0',
             '-z', '0.0',
-            '-Y', '0.0',
+            '-Y', '1.570',
         ],
         output={'both': 'log'},
     )
@@ -145,7 +145,7 @@ def launch_setup(context, *args, **kwargs):
         namespace=robot_name_launch_arg,
         arguments=[
             '-c',
-            'controller_manager',
+            f'/{str(robot_name_launch_arg.perform(context))}/controller_manager',
             'joint_state_broadcaster',
         ],
         parameters=[{
@@ -160,7 +160,7 @@ def launch_setup(context, *args, **kwargs):
         namespace=robot_name_launch_arg,
         arguments=[
             '-c',
-            'controller_manager',
+            f'/{str(robot_name_launch_arg.perform(context))}/controller_manager',
             'arm_controller',
         ],
         parameters=[{
@@ -175,7 +175,7 @@ def launch_setup(context, *args, **kwargs):
         namespace=robot_name_launch_arg,
         arguments=[
             '-c',
-            'controller_manager',
+            f'/{str(robot_name_launch_arg.perform(context))}/controller_manager',
             'gripper_controller',
         ],
         parameters=[{
