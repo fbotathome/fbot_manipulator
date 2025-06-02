@@ -1,0 +1,22 @@
+# MoveIt uses this configuration for controller management
+
+moveit_controller_manager: moveit_ros_control_interface/MoveItControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - interbotix_arm_controller
+    - interbotix_gripper_controller
+
+  interbotix_arm_controller:
+    type: FollowJointTrajectory
+    joints:
+      - waist
+      - shoulder
+      - elbow
+      - wrist_angle
+      - wrist_rotate
+  interbotix_gripper_controller:
+    type: FollowJointTrajectory
+    joints:
+      - left_finger
+      - right_finger

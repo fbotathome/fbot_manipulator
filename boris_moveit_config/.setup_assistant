@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: boris_description
+    relative_path: urdf/boris_full.xacro
+  srdf:
+    relative_path: config/boris.srdf
+  package_settings:
+    author_name: Cris Lima Froes
+    author_email: cris.lima.froes@gmail.com
+    generated_timestamp: 1744482120
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity

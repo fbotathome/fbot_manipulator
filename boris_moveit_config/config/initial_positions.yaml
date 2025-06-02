@@ -1,0 +1,9 @@
+# Default initial positions for boris's ros2_control fake system
+
+initial_positions:
+  elbow: 0.0
+  left_finger: 0.0
+  shoulder: 0.0
+  waist: 0.0
+  wrist_angle: 0.0
+  wrist_rotate: 0.0
