@@ -1,0 +1,21 @@
+poses:
+  ros__parameters:
+    targets:
+      Sleep:
+        waist: 0.0
+        shoulder: -1.8799999952316284
+        elbow: 1.5
+        wrist_angle: 0.800000011920929
+        wrist_rotate: 0.0
+        gripper: 0.049893841500397315
+        left_finger: 0.020204313226843598
+        right_finger: -0.020204313226843598
+      Home:
+        waist: 0.0
+        shoulder: -1.8799999952316284
+        elbow: 1.5
+        wrist_angle: 0.800000011920929
+        wrist_rotate: 0.0
+        gripper: 0.05131687351037159
+        left_finger: 0.020224932518122567
+        right_finger: -0.020224932518122567

@@ -87,7 +87,7 @@ file_path = ''
 
 ARM_POSE = get_targets_from_yaml(file_path)
 
-
+print(ARM_POSE)
 ARM_POSE = {
 
 }
