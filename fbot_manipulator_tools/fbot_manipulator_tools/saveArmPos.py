@@ -13,7 +13,7 @@ from rclpy.node import Node
 
 
 
-#TO DO: self.poses['poses']['ros__parameters']['targets'][pose_name] Line should have its values renamed to fit. 
+#TO DO: self.poses['poses']['ros__parameters']['targets'][pose_name] Line should have its values renamed to fit..
 # "poses" should be the current used node name and "targets" and "pose name" should follow the structure of the yaml file.
 '''
 Save the current pose in the specified topic to a yaml file.
