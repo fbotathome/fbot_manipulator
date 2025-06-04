@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'manipulator_saver = fbot_manipulator_tools.saveArmPos:main',
+            'manipulator_saver = fbot_manipulator_tools.save_arm_pose:main',
 
         ],
     },

@@ -1,0 +1,21 @@
+poses:
+  ros__parameters:
+    targets:
+      look:
+        waist: 0.0
+        shoulder: -1.88
+        elbow: 1.5
+        wrist_angle: 0.8
+        wrist_rotate: 0.0
+        gripper: 0.0
+        left_finger: 0.019493588689617928
+        right_finger: -0.019493588689617928
+      p1:
+        waist: 0.0
+        shoulder: -1.88
+        elbow: 1.5
+        wrist_angle: 0.8
+        wrist_rotate: 0.0
+        gripper: 0.0
+        left_finger: 0.019493588689617928
+        right_finger: -0.019493588689617928
