@@ -47,16 +47,18 @@ class ArmJointStateSaver (Node):
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warning('Service not found')
 
-        self.req_disabled = TorqueEnable.Request()
-        self.req_disabled.cmd_type = 'group'
-        self.req_disabled.name = 'all'
-        self.req_disabled.enable = False
+        def initialize_requisitions():
+            self.req_disabled = TorqueEnable.Request()
+            self.req_disabled.cmd_type = 'group'
+            self.req_disabled.name = 'all'
+            self.req_disabled.enable = False
 
-        self.req_enabled = TorqueEnable.Request()
-        self.req_enabled.cmd_type = 'group'
-        self.req_enabled.name = 'all'
-        self.req_enabled.enable = True
+            self.req_enabled = TorqueEnable.Request()
+            self.req_enabled.cmd_type = 'group'
+            self.req_enabled.name = 'all'
+            self.req_enabled.enable = True
 
+        initialize_requisitions()
         self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
         self.config = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config"))
 
