@@ -58,8 +58,7 @@ class ArmJointStateSaver (Node):
         self.req_enabled.enable = True
 
         self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
-        ws_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../"))
-        self.config_path = os.path.join(ws_dir,'src/fbot_manipulator/config')
+        self.config = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config"))
 
         while True:
             check_sleep = input("The torque will be disabled. The Arm is in the sleep pose? (y/n): ").lower()            
