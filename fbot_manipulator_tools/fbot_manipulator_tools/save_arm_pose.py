@@ -91,7 +91,7 @@ class ArmJointStateSaver (Node):
             else:
                 self.get_logger().warning("The file extension must be a .yaml (e.g., arm_poses.yaml): ")
         self.yaml_path = self.config_path + '/' + self.yaml_file
-        self.save_pose()
+        self.savePose()
 
     def torqueControl(self, data):
         '''
@@ -101,7 +101,7 @@ class ArmJointStateSaver (Node):
         '''
         return self.client.call_async(data)
     
-    def save_pose(self) -> None:
+    def savePose(self) -> None:
         keep_saving = True
         while rclpy.ok():
             success, message = wait_for_message(msg_type= JointState, node=self, topic='/wx200/joint_states', time_to_wait=10)
@@ -126,10 +126,10 @@ class ArmJointStateSaver (Node):
                 save_more = input("Do you want to add more poses? (y/n): ").lower()
                 if save_more == 'n':
                     keep_saving = False
-                    self.write_to_yaml()
+                    self.writeToYaml()
                     self.get_logger().info('Enabling the torque')
                     self.get_logger().info(f"Poses saved to {self.yaml_file}. Shutting down node.")
-                    
+
                     self.torqueControl(self.req_enabled)
                     return               
                 elif save_more == 'y':
@@ -137,7 +137,7 @@ class ArmJointStateSaver (Node):
                 else:
                     self.get_logger().warning("Invalid input. Please enter 'y' or 'n'.")
 
-    def write_to_yaml(self):
+    def writeToYaml(self):
         OrderedDumper.add_representer(OrderedDict, OrderedDumper.representOrderedDictionary)
 
         if os.path.exists(self.yaml_path):
