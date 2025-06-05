@@ -33,6 +33,22 @@ OrderedLoader.add_constructor(
     ConstructorOrderedDictionary
 )
 
+def initializeRequisitions(self):
+    '''
+    @brief Initializes the service requests for enabling and disabling torque.
+    @return: None
+    '''
+
+    self.req_disabled = TorqueEnable.Request()
+    self.req_disabled.cmd_type = 'group'
+    self.req_disabled.name = 'all'
+    self.req_disabled.enable = False
+    self.req_enabled = TorqueEnable.Request()
+    self.req_enabled.cmd_type = 'group'
+    self.req_enabled.name = 'all'
+    self.req_enabled.enable = True
+
+
 class ArmJointStateSaver (Node):
     '''
     @class ArmJointStateSaver
@@ -43,25 +59,17 @@ class ArmJointStateSaver (Node):
     
     def __init__(self, node_name):
         '''
-        @brief Constructor for the ArmJointStateSaver node.
+        @brief Initializes the ArmJointStateSaver node.
+        @param node_name: The name of the node.
+        @return: None
         '''
+        
         super().__init__(node_name=node_name)
         self.client = self.create_client(TorqueEnable, '/wx200/torque_enable')
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warning('Service not found')
 
-        def initialize_requisitions():
-            self.req_disabled = TorqueEnable.Request()
-            self.req_disabled.cmd_type = 'group'
-            self.req_disabled.name = 'all'
-            self.req_disabled.enable = False
-
-            self.req_enabled = TorqueEnable.Request()
-            self.req_enabled.cmd_type = 'group'
-            self.req_enabled.name = 'all'
-            self.req_enabled.enable = True
-
-        initialize_requisitions()
+        initializeRequisitions(self)
         self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
         ws_dir = os.path.abspath(os.path.join(get_package_share_directory('fbot_manipulator_tools'), '../../../..'))
         self.config_path = os.path.join(ws_dir, "src", "fbot_manipulator", "config")
@@ -87,8 +95,9 @@ class ArmJointStateSaver (Node):
 
     def torque_control(self, data):
         '''
-        @brief A function to control the torque It's used to control if the arm torque will be enabled or disabled.
-        @param data: self.req_disable, self.req_enabled
+        @brief Sends a request to enable or disable the arm torque.
+        @param data: self.req_disable(Disable arm torque) self.req_enabled(Enable arm torque)
+        @return: None
         '''
         return self.client.call_async(data)
     
