@@ -2,6 +2,8 @@ import rclpy
 from rclpy.wait_for_message import wait_for_message
 from rclpy.node import Node
 
+from pathlib import Path
+
 import yaml
 import os
 
@@ -60,7 +62,7 @@ class ArmJointStateSaver (Node):
 
         initialize_requisitions()
         self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
-        self.config = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config"))
+        self.config_path = os.path.join(Path.cwd(), 'src/fbot_manipulator/config')
 
         while True:
             check_sleep = input("The torque will be disabled. The Arm is in the sleep pose? (y/n): ").lower()            
