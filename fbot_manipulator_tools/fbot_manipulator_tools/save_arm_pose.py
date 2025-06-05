@@ -33,23 +33,10 @@ OrderedLoader.add_constructor(
     ConstructorOrderedDictionary
 )
 
-def initializeRequisitions(self):
-    '''
-    @brief Initializes the service requests for enabling and disabling torque.
-    @return: None
-    '''
-
-    self.req_disabled = TorqueEnable.Request()
-    self.req_disabled.cmd_type = 'group'
-    self.req_disabled.name = 'all'
-    self.req_disabled.enable = False
-    self.req_enabled = TorqueEnable.Request()
-    self.req_enabled.cmd_type = 'group'
-    self.req_enabled.name = 'all'
-    self.req_enabled.enable = True
 
 
-class ArmJointStateSaver (Node):
+
+class ArmJointStateSaver(Node):
     '''
     @class ArmJointStateSaver
     @brief A ROS 2 node that saves the current joint state of a robot arm to a YAML file.
@@ -57,6 +44,21 @@ class ArmJointStateSaver (Node):
     by entering a name. The saved joint states are stored in a YAML file for later use.
     '''
     
+    def initializeRequisitions(self):
+        '''
+        @brief Initializes the service requests for enabling and disabling torque.
+        @return: None
+        '''
+
+        self.req_disabled = TorqueEnable.Request()
+        self.req_disabled.cmd_type = 'group'
+        self.req_disabled.name = 'all'
+        self.req_disabled.enable = False
+        self.req_enabled = TorqueEnable.Request()
+        self.req_enabled.cmd_type = 'group'
+        self.req_enabled.name = 'all'
+        self.req_enabled.enable = True
+
     def __init__(self, node_name):
         '''
         @brief Initializes the ArmJointStateSaver node.
@@ -69,7 +71,7 @@ class ArmJointStateSaver (Node):
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warning('Service not found')
 
-        initializeRequisitions(self)
+        self.initializeRequisitions(self)
         self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
         ws_dir = os.path.abspath(os.path.join(get_package_share_directory('fbot_manipulator_tools'), '../../../..'))
         self.config_path = os.path.join(ws_dir, "src", "fbot_manipulator", "config")
@@ -97,7 +99,7 @@ class ArmJointStateSaver (Node):
         '''
         @brief Sends a request to enable or disable the arm torque.
         @param data: self.req_disable(Disable arm torque) self.req_enabled(Enable arm torque)
-        @return: None
+        @return: Returns the client call
         '''
         return self.client.call_async(data)
     
