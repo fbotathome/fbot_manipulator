@@ -2,13 +2,14 @@ import rclpy
 from rclpy.wait_for_message import wait_for_message
 from rclpy.node import Node
 
-from pathlib import Path
+from ament_index_python.packages import get_package_share_directory
 
 import yaml
 import os
 
 from interbotix_xs_msgs.srv import TorqueEnable
 from sensor_msgs.msg import JointState
+
 from collections import OrderedDict
 
 class OrderedDumper(yaml.SafeDumper):
@@ -62,8 +63,8 @@ class ArmJointStateSaver (Node):
 
         initialize_requisitions()
         self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
-        self.config_path = os.path.join(Path.cwd(), 'src/fbot_manipulator/config')
-
+        ws_dir = os.path.abspath(os.path.join(get_package_share_directory('fbot_manipulator_tools'), '../../../..'))
+        self.config_path = os.path.join(ws_dir, "src", "fbot_manipulator", "config")
         while True:
             check_sleep = input("The torque will be disabled. The Arm is in the sleep pose? (y/n): ").lower()            
             if check_sleep == 'n':
