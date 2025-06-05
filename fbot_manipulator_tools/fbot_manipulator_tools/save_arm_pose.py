@@ -63,7 +63,7 @@ class ArmJointStateSaver (Node):
         @param node_name: The name of the node.
         @return: None
         '''
-        
+
         super().__init__(node_name=node_name)
         self.client = self.create_client(TorqueEnable, '/wx200/torque_enable')
         while not self.client.wait_for_service(timeout_sec=1.0):
@@ -79,7 +79,7 @@ class ArmJointStateSaver (Node):
                 continue
             elif check_sleep == 'y':
                 print('Disabling the torque')
-                self.torque_control(self.req_disabled)
+                self.torqueControl(self.req_disabled)
                 break
             else:
                 self.get_logger().warning("Invalid input. Please enter 'y' or 'n'. ")
@@ -93,7 +93,7 @@ class ArmJointStateSaver (Node):
         self.yaml_path = self.config_path + '/' + self.yaml_file
         self.save_pose()
 
-    def torque_control(self, data):
+    def torqueControl(self, data):
         '''
         @brief Sends a request to enable or disable the arm torque.
         @param data: self.req_disable(Disable arm torque) self.req_enabled(Enable arm torque)
@@ -129,7 +129,8 @@ class ArmJointStateSaver (Node):
                     self.write_to_yaml()
                     self.get_logger().info('Enabling the torque')
                     self.get_logger().info(f"Poses saved to {self.yaml_file}. Shutting down node.")
-                    self.torque_control(self.req_enabled)
+                    
+                    self.torqueControl(self.req_enabled)
                     return               
                 elif save_more == 'y':
                     break
