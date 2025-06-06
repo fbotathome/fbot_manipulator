@@ -80,7 +80,7 @@ class ArmJointStateSaver(Node):
             if check_sleep == 'n':
                 continue
             elif check_sleep == 'y':
-                print('Disabling the torque')
+                self.get_logger().warning('Disabling the torque')
                 self.torqueControl(self.req_disabled)
                 break
             else:
@@ -129,7 +129,7 @@ class ArmJointStateSaver(Node):
                 if save_more == 'n':
                     keep_saving = False
                     self.writeToYaml()
-                    self.get_logger().info('Enabling the torque')
+                    self.get_logger().warning('Enabling the torque')
                     self.get_logger().info(f"Poses saved to {self.yaml_file}. Shutting down node.")
 
                     self.torqueControl(self.req_enabled)
@@ -162,7 +162,7 @@ class ArmJointStateSaver(Node):
         self.get_logger().info(self.yaml_path)
         with open(self.yaml_path, 'w') as yaml_file:
              yaml.dump(existing_data, yaml_file, default_flow_style=False, Dumper=OrderedDumper)
-        return print('Saved Poses to the .yaml file')
+        return self.get_logger().info('Saved Poses to the .yaml file')
 
 
 def main(args=None) -> None:
