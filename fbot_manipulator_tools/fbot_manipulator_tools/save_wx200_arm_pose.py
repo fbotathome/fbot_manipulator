@@ -50,14 +50,12 @@ class ArmJointStateSaver(Node):
     '''
     
     def __init__(self, node_name):
-        
         '''
         @brief Initializes the ArmJointStateSaver node.
         @param node_name: The name of the node.
         @return: None
         '''
-
-        super().__init__(node_name=node_name)
+        super().__init__(node_name)
         self.client = self.create_client(TorqueEnable, '/wx200/torque_enable')
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warning('Service not found')
@@ -86,15 +84,11 @@ class ArmJointStateSaver(Node):
         self.yaml_path = self.config_path + '/' + self.yaml_file
         self.savePose()
 
-
-
     def initializeRequisitions(self):
-            
             '''
             @brief Initializes the service requests for enabling and disabling torque.
             @return: None
             '''
-
             self.req_disabled = TorqueEnable.Request()
             self.req_disabled.cmd_type = 'group'
             self.req_disabled.name = 'all'
@@ -105,7 +99,6 @@ class ArmJointStateSaver(Node):
             self.req_enabled.enable = True
 
     def torqueControl(self, data):
-        
         '''
         @brief Sends a request to enable or disable the arm torque.
         @param data: self.req_disable(Disable arm torque) self.req_enabled(Enable arm torque)
@@ -114,12 +107,10 @@ class ArmJointStateSaver(Node):
         return self.client.call_async(data)
     
     def savePose(self) -> None:
-        
         '''
         @brief This method waits for a message on the '/wx200/joint_states' topic, retrieves the joint names and positions, and allows the user to name the pose. The pose is then saved in a YAML file. The method will keep asking for poses until the user decides to stop saving. The torque is disabled before saving poses and enabled after saving is complete.
         @return: None
         '''
-
         keep_saving = True
         while rclpy.ok():
             success, message = wait_for_message(msg_type= JointState, node=self, topic='/wx200/joint_states', time_to_wait=10)
