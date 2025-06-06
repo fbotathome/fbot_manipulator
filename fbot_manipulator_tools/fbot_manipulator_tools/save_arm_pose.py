@@ -13,9 +13,11 @@ from sensor_msgs.msg import JointState
 from collections import OrderedDict
 
 class OrderedDumper(yaml.SafeDumper):
+    
     '''
     @brief Custom YAML dumper to handle OrderedDict.
     '''
+    
     def representOrderedDictionary(self, data):
         return self.represent_dict(data.items())
     
@@ -23,9 +25,11 @@ class OrderedLoader(yaml.SafeLoader):
     pass
 
 def ConstructorOrderedDictionary(loader, node):
+   
     '''
     @brief Constructor to OrderDictionary
     '''
+    
     return OrderedDict(loader.construct_pairs(node))
 
 OrderedLoader.add_constructor(
@@ -37,6 +41,7 @@ OrderedLoader.add_constructor(
 
 
 class ArmJointStateSaver(Node):
+    
     '''
     @class ArmJointStateSaver
     @brief A ROS 2 node that saves the current joint state of a robot arm to a YAML file.
@@ -44,22 +49,8 @@ class ArmJointStateSaver(Node):
     by entering a name. The saved joint states are stored in a YAML file for later use.
     '''
     
-    def initializeRequisitions(self):
-        '''
-        @brief Initializes the service requests for enabling and disabling torque.
-        @return: None
-        '''
-
-        self.req_disabled = TorqueEnable.Request()
-        self.req_disabled.cmd_type = 'group'
-        self.req_disabled.name = 'all'
-        self.req_disabled.enable = False
-        self.req_enabled = TorqueEnable.Request()
-        self.req_enabled.cmd_type = 'group'
-        self.req_enabled.name = 'all'
-        self.req_enabled.enable = True
-
     def __init__(self, node_name):
+        
         '''
         @brief Initializes the ArmJointStateSaver node.
         @param node_name: The name of the node.
@@ -71,7 +62,7 @@ class ArmJointStateSaver(Node):
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warning('Service not found')
 
-        self.initializeRequisitions(self)
+        self.initializeRequisitions()
         self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
         ws_dir = os.path.abspath(os.path.join(get_package_share_directory('fbot_manipulator_tools'), '../../../..'))
         self.config_path = os.path.join(ws_dir, "src", "fbot_manipulator", "config")
@@ -95,7 +86,26 @@ class ArmJointStateSaver(Node):
         self.yaml_path = self.config_path + '/' + self.yaml_file
         self.savePose()
 
+
+
+    def initializeRequisitions(self):
+            
+            '''
+            @brief Initializes the service requests for enabling and disabling torque.
+            @return: None
+            '''
+
+            self.req_disabled = TorqueEnable.Request()
+            self.req_disabled.cmd_type = 'group'
+            self.req_disabled.name = 'all'
+            self.req_disabled.enable = False
+            self.req_enabled = TorqueEnable.Request()
+            self.req_enabled.cmd_type = 'group'
+            self.req_enabled.name = 'all'
+            self.req_enabled.enable = True
+
     def torqueControl(self, data):
+        
         '''
         @brief Sends a request to enable or disable the arm torque.
         @param data: self.req_disable(Disable arm torque) self.req_enabled(Enable arm torque)
@@ -104,23 +114,28 @@ class ArmJointStateSaver(Node):
         return self.client.call_async(data)
     
     def savePose(self) -> None:
+        
+        '''
+        @brief This method waits for a message on the '/wx200/joint_states' topic, retrieves the joint names and positions, and allows the user to name the pose. The pose is then saved in a YAML file. The method will keep asking for poses until the user decides to stop saving. The torque is disabled before saving poses and enabled after saving is complete.
+        @return: None
+        '''
+
         keep_saving = True
         while rclpy.ok():
             success, message = wait_for_message(msg_type= JointState, node=self, topic='/wx200/joint_states', time_to_wait=10)
+            if not success:
+                self.get_logger().warning("No pose received from topic yet.")
+                continue
             joints = message.name
             values = message.position
             self.joints_values = tuple(zip(joints,values))
             self.get_logger().info(f"Received msg: {self.joints_values}")
             self.current_pose = self.joints_values
             arm_name = input("Move the arm to the desired pose and enter its name (e.g., 'PrePickup', 'LookToGarbage'): ")
+    
             if not arm_name: 
                 self.get_logger().warning("No name provided, skipping pose.")
                 continue
-            
-            if not success:
-                self.get_logger().warning("No pose received from topic yet.")
-                continue
-
             self.poses['poses']['ros__parameters']['targets'][arm_name] = OrderedDict(self.joints_values)
 
             self.get_logger().info(f"Pose '{arm_name}' saved.")
@@ -140,6 +155,12 @@ class ArmJointStateSaver(Node):
                     self.get_logger().warning("Invalid input. Please enter 'y' or 'n'.")
 
     def writeToYaml(self):
+        
+        ''' 
+        @brief Writes the saved poses to a YAML file.
+        @return: None
+        '''
+
         OrderedDumper.add_representer(OrderedDict, OrderedDumper.representOrderedDictionary)
 
         if os.path.exists(self.yaml_path):
