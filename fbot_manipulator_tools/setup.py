@@ -15,12 +15,12 @@ setup(
     zip_safe=True,
     maintainer='luizlost',
     maintainer_email='luized_sparvoli@hotmail.com',
-    description='A set of tools for the fbot_manipulators',
+    description='A set of tools for the fbot_manipulator, including a node to save the wx200 arm poses.',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'manipulator_saver = fbot_manipulator_tools.save_arm_pose:main',
+            'manipulator_saver = fbot_manipulator_tools.save_arm_pose_wx200:main',
 
         ],
     },
