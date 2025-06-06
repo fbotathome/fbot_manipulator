@@ -55,7 +55,7 @@ class ArmJointStateSaver(Node):
         @param node_name: The name of the node.
         @return: None
         '''
-        super().__init__(node_name)
+        super().__init__(node_name='wx200ArmPoseSaver')
         self.client = self.create_client(TorqueEnable, '/wx200/torque_enable')
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warning('Service not found')
