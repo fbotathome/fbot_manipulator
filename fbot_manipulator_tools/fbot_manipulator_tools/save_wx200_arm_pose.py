@@ -13,11 +13,9 @@ from sensor_msgs.msg import JointState
 from collections import OrderedDict
 
 class OrderedDumper(yaml.SafeDumper):
-    
     '''
     @brief Custom YAML dumper to handle OrderedDict.
     '''
-    
     def representOrderedDictionary(self, data):
         return self.represent_dict(data.items())
     
@@ -25,11 +23,9 @@ class OrderedLoader(yaml.SafeLoader):
     pass
 
 def ConstructorOrderedDictionary(loader, node):
-   
     '''
     @brief Constructor to OrderDictionary
     '''
-    
     return OrderedDict(loader.construct_pairs(node))
 
 OrderedLoader.add_constructor(
@@ -41,14 +37,12 @@ OrderedLoader.add_constructor(
 
 
 class ArmJointStateSaver(Node):
-    
     '''
     @class ArmJointStateSaver
     @brief A ROS 2 node that saves the current joint state of a robot arm to a YAML file.
     This node subscribes to a specified joint state topic and allows the user to save the current pose of the arm
     by entering a name. The saved joint states are stored in a YAML file for later use.
     '''
-    
     def __init__(self, node_name):
         '''
         @brief Initializes the ArmJointStateSaver node.
@@ -146,12 +140,10 @@ class ArmJointStateSaver(Node):
                     self.get_logger().warning("Invalid input. Please enter 'y' or 'n'.")
 
     def writeToYaml(self):
-        
         ''' 
         @brief Writes the saved poses to a YAML file.
         @return: None
         '''
-
         OrderedDumper.add_representer(OrderedDict, OrderedDumper.representOrderedDictionary)
 
         if os.path.exists(self.yaml_path):
