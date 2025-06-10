@@ -1,48 +1,4 @@
 poses:
-  p1:
-    waist: 0.0
-    shoulder: -1.88
-    elbow: 1.5
-    wrist_angle: 0.8
-    wrist_rotate: 0.0
-    gripper: 0.0
-    right_finger: -0.019493588689617928
-  p2:
-    waist: 0.0
-    shoulder: -1.88
-    elbow: 1.5
-    wrist_angle: 0.8
-    wrist_rotate: 0.0
-    gripper: 0.0
-    left_finger: 0.019493588689617928
-    right_finger: -0.019493588689617928
-  p3:
-    waist: 0.0
-    shoulder: -1.88
-    elbow: 1.5
-    wrist_angle: 0.8
-    wrist_rotate: 0.0
-    gripper: 0.0
-    left_finger: 0.019493588689617928
-    right_finger: -0.019493588689617928
-  p5:
-    waist: 0.0
-    shoulder: -1.88
-    elbow: 1.5
-    wrist_angle: 0.8
-    wrist_rotate: 0.0
-    gripper: 0.0
-    left_finger: 0.019493588689617928
-    right_finger: -0.019493588689617928
-  p4:
-    waist: 0.0
-    shoulder: -1.88
-    elbow: 1.5
-    wrist_angle: 0.8
-    wrist_rotate: 0.0
-    gripper: 0.0
-    left_finger: 0.019493588689617928
-    right_finger: -0.019493588689617928
   Sleep:
     waist: 0.0
     shoulder: -1.8799999952316284
