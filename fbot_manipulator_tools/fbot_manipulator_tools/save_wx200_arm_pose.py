@@ -55,7 +55,7 @@ class ArmJointStateSaver(Node):
             self.get_logger().warning('Service not found')
 
         self.initializeRequisitions()
-        self.poses = {'poses': {'ros__parameters': {'targets': {}}}}
+        self.poses = {'poses':{}}
         ws_dir = os.path.abspath(os.path.join(get_package_share_directory('fbot_manipulator_tools'), '../../../..'))
         self.config_path = os.path.join(ws_dir, "src", "fbot_manipulator", "config")
         while True:
@@ -121,7 +121,7 @@ class ArmJointStateSaver(Node):
             if not arm_name: 
                 self.get_logger().warning("No name provided, skipping pose.")
                 continue
-            self.poses['poses']['ros__parameters']['targets'][arm_name] = OrderedDict(self.joints_values)
+            self.poses['poses'][arm_name] = OrderedDict(self.joints_values)
 
             self.get_logger().info(f"Pose '{arm_name}' saved.")
             while keep_saving == True:
@@ -160,9 +160,9 @@ class ArmJointStateSaver(Node):
             existing_data = OrderedDict()
 
         if 'poses' not in existing_data:
-            existing_data['poses']= OrderedDict({'ros__parameters':{'targets': OrderedDict()}})
+            existing_data['poses']= OrderedDict(OrderedDict())
 
-        existing_data['poses']['ros__parameters']['targets'].update(self.poses['poses']['ros__parameters']['targets'])
+        existing_data['poses'].update(self.poses['poses'])
         self.get_logger().info(self.yaml_path)
         with open(self.yaml_path, 'w') as yaml_file:
              yaml.dump(existing_data, yaml_file, default_flow_style=False, Dumper=OrderedDumper)

@@ -73,16 +73,16 @@ REV: float = 2 * np.pi
 
 def get_targets_from_yaml(file_path):
     try:
-        with open(file_path,'r') as file:
+        with open(file_path, 'r') as file:
             data = yaml.safe_load(file)
-            return data.get('moveToTarget', {}).get('ros__parameters', {}).get('targets')
+            poses = data['poses']
 
+            return {name: list(pose.values()) for name, pose in poses.items()}
     except FileNotFoundError:
-        print(f"Erro: O arquivo '{file_path}' não foi encontrado.")
-        return None
-    
+        print(f"Error: The file {file_path} was not found.")
+        return 'error'
 #File path to the yaml file
-file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/pose.yaml'
+file_path = '/home/luizlost/fbot_ws/src/fbot_manipulator/config/pose.yaml'
 
 
 ARM_POSE = get_targets_from_yaml(file_path)

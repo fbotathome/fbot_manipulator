@@ -1,21 +1,63 @@
 poses:
-  ros__parameters:
-    targets:
-      Home:
-        waist: 0.0
-        shoulder: 0.0
-        elbow: 0.0
-        wrist_angle: 0.0
-        wrist_rotate: 0.0
-        gripper: 0.0
-        left_finger: 0.019493588689617928
-        right_finger: -0.019493588689617928
-      Sleep:
-        waist: 0.0
-        shoulder: -1.8799999952316284
-        elbow: 1.5
-        wrist_angle: 0.800000011920929
-        wrist_rotate: 0.0
-        gripper: 0.0
-        left_finger: 0.019493588689617928
-        right_finger: -0.019493588689617928
+  p1:
+    waist: 0.0
+    shoulder: -1.88
+    elbow: 1.5
+    wrist_angle: 0.8
+    wrist_rotate: 0.0
+    gripper: 0.0
+    right_finger: -0.019493588689617928
+  p2:
+    waist: 0.0
+    shoulder: -1.88
+    elbow: 1.5
+    wrist_angle: 0.8
+    wrist_rotate: 0.0
+    gripper: 0.0
+    left_finger: 0.019493588689617928
+    right_finger: -0.019493588689617928
+  p3:
+    waist: 0.0
+    shoulder: -1.88
+    elbow: 1.5
+    wrist_angle: 0.8
+    wrist_rotate: 0.0
+    gripper: 0.0
+    left_finger: 0.019493588689617928
+    right_finger: -0.019493588689617928
+  p5:
+    waist: 0.0
+    shoulder: -1.88
+    elbow: 1.5
+    wrist_angle: 0.8
+    wrist_rotate: 0.0
+    gripper: 0.0
+    left_finger: 0.019493588689617928
+    right_finger: -0.019493588689617928
+  p4:
+    waist: 0.0
+    shoulder: -1.88
+    elbow: 1.5
+    wrist_angle: 0.8
+    wrist_rotate: 0.0
+    gripper: 0.0
+    left_finger: 0.019493588689617928
+    right_finger: -0.019493588689617928
+  Sleep:
+    waist: 0.0
+    shoulder: -1.8799999952316284
+    elbow: 1.5
+    wrist_angle: 0.800000011920929
+    wrist_rotate: 0.0
+    gripper: 0.019503335972316547
+    left_finger: 0.019768530029725104
+    right_finger: -0.019768530029725104
+  Home:
+    waist: 0.0
+    shoulder: -1.8799999952316284
+    elbow: 1.5
+    wrist_angle: 0.800000011920929
+    wrist_rotate: 0.0
+    gripper: 0.021033582722768337
+    left_finger: 0.019790260813736398
+    right_finger: -0.019790260813736398
