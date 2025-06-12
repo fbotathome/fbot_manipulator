@@ -105,6 +105,7 @@ class ArmJointStateSaver(Node):
         @brief This method waits for a message on the '/wx200/joint_states' topic, retrieves the joint names and positions, and allows the user to name the pose. The pose is then saved in a YAML file. The method will keep asking for poses until the user decides to stop saving. The torque is disabled before saving poses and enabled after saving is complete.
         @return: None
         '''
+        keys_to_remove = {'gripper', 'left_finger', 'right_finger'}
         keep_saving = True
         while rclpy.ok():
             success, message = wait_for_message(msg_type= JointState, node=self, topic='/wx200/joint_states', time_to_wait=10)
@@ -114,14 +115,15 @@ class ArmJointStateSaver(Node):
             joints = message.name
             values = message.position
             self.joints_values = tuple(zip(joints,values))
-            self.get_logger().info(f"Received msg: {self.joints_values}")
-            self.current_pose = self.joints_values
+            filtered_joints_values = [(k, v) for k, v in self.joints_values if k not in keys_to_remove]
+            self.get_logger().info(f"Received msg: {filtered_joints_values}")
+            self.current_pose = filtered_joints_values
             arm_name = input("Move the arm to the desired pose and enter its name (e.g., 'PrePickup', 'LookToGarbage'): ")
     
             if not arm_name: 
                 self.get_logger().warning("No name provided, skipping pose.")
                 continue
-            self.poses['poses'][arm_name] = OrderedDict(self.joints_values)
+            self.poses['poses'][arm_name] = OrderedDict(filtered_joints_values)
 
             self.get_logger().info(f"Pose '{arm_name}' saved.")
             while keep_saving == True:

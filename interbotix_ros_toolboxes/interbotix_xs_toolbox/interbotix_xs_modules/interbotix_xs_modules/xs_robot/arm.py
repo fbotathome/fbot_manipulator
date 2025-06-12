@@ -77,7 +77,7 @@ def get_targets_from_yaml(file_path):
             data = yaml.safe_load(file)
             poses = data['poses']
 
-            return {name: list(pose.values()) for name, pose in poses.items()}
+            return {name: list(pose.values()) for name, pose in poses.items() if name != 'gripper' and 'left_finger' and 'right_finger'}
     except FileNotFoundError:
         print(f"Error: The file {file_path} was not found.")
         return 'error'
