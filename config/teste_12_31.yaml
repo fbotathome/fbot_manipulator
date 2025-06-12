@@ -1,0 +1,25 @@
+poses:
+  pick:
+    waist: -0.010737866163253784
+    shoulder: 0.004601942375302315
+    elbow: -1.8944662809371948
+    wrist_angle: 2.152175188064575
+    wrist_rotate: 0.003067961661145091
+  look:
+    waist: -0.010737866163253784
+    shoulder: 0.029145635664463043
+    elbow: -1.8960002660751343
+    wrist_angle: 1.9144080877304077
+    wrist_rotate: 0.0
+  cris:
+    waist: 0.849825382232666
+    shoulder: 0.8022719621658325
+    elbow: -0.6289321184158325
+    wrist_angle: -0.6948933005332947
+    wrist_rotate: 0.0076699042692780495
+  Home:
+    waist: 0.0
+    shoulder: -1.8799999952316284
+    elbow: 1.5
+    wrist_angle: 0.800000011920929
+    wrist_rotate: 0.0
