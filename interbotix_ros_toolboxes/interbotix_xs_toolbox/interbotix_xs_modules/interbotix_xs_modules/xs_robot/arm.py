@@ -76,15 +76,16 @@ def get_targets_from_yaml(file_path):
         with open(file_path, 'r') as file:
             data = yaml.safe_load(file)
             poses = data['poses']
-
-            return {name: list(pose.values()) for name, pose in poses.items()}
+            dict = {name: list(pose.values()) for name, pose in poses.items()}
+            return dict
     except FileNotFoundError:
         print(f"Error: The file {file_path} was not found.")
         return 'error'
 #File path to the yaml file
-file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/teste_12_31.yaml'
+file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/test_1032.yaml'
 
 ARM_POSE = get_targets_from_yaml(file_path)
+print(ARM_POSE)
 class InterbotixManipulatorXS:
     """Standalone Module to control an Interbotix Arm and Gripper."""
 
