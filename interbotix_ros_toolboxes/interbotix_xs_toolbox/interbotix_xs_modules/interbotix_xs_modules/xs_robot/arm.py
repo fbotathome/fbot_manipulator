@@ -32,9 +32,12 @@ Contains classes used to control Interbotix X-Series Arms.
 These classes can be used to control an X-Series standalone arm using Python.
 """
 
+
+
 import math
 import sys
 from typing import Any, List, Tuple, Union
+import yaml
 
 import interbotix_common_modules.angle_manipulation as ang
 from interbotix_common_modules.common_robot.robot import InterbotixRobotNode
@@ -67,24 +70,21 @@ REV: float = 2 * np.pi
     The joint order is: [waist, shoulder, elbow, wrist_angle, wrist_rotate]
 """
 
-ARM_POSE = {
-    "Sleep": [0, -1.88, 1.5, 0.8, 0],
-    "Sleep_Manip": [-1.555456519126892, -1.88, 1.5, 0.27458256483078003, 0],
-    "SleepBag": [-1.555456519126892, -1.88, 1.5, 0.27458256483078003, 1.4956313371658325],
-    "SleepBagHigh": [-1.5677284002304077, -1.4204663038253784, 0.7823302149772644, 0.6227962374687195, 1.540116786956787],
-    "PrePick": [-0.0015, -0.0322, 1.3023, -1.3268, 0.07669],
-    "Home": [0, 0, 0, 0, 0],
-    "HomeRotate": [0, 0, 0, 0, 1.4956313371658325],
-    "PrePickUp": [-0.02454369328916073, 1.6137478351593018, -0.04141748324036598, 0.09357283264398575, -0.04908738657832146],
-    "PrePickUpVertical": [-0.02454369328916073, 1.6137478351593018, -0.04141748324036598, 0.09357283264398575, 1.4956313371658325],
-    "PrePickUpRotate": [-0.02454369328916073, 1.6137478351593018, -0.04141748324036598, -1.4956313371658325, 1.4956313371658325],
-    "PrePickGarbage": [-0.006135923322290182, 0.7271069288253784, 0.07976700365543365, 0.8329516053199768, 1.5339808464050293],
-    "PickGarbage": [-0.01840776950120926, 1.6873788833618164, -0.3466796576976776, 0.40957286953926086, 1.5355148315429688],
-    "DropGarbage": [0.013805827125906944, 0.6810874938964844, -0.7025632262229919, 1.7257283926010132, 1.5355148315429688],
-    "LookGarbage": [-0.004601942375302315, 0.029145635664463043, -0.22396120429039001, 1.8054953813552856, 0.02147573232650757]
-}
 
+def get_targets_from_yaml(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            data = yaml.safe_load(file)
+            poses = data['poses']
+            dict = {name: list(pose.values()) for name, pose in poses.items()}
+            return dict
+    except FileNotFoundError:
+        print(f"Error: The file {file_path} was not found.")
+        return 'error'
+#File path to the yaml file
+file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/pose.yaml'
 
+ARM_POSE = get_targets_from_yaml(file_path)
 class InterbotixManipulatorXS:
     """Standalone Module to control an Interbotix Arm and Gripper."""
 
