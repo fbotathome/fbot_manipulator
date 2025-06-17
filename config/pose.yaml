@@ -11,39 +11,3 @@ poses:
     elbow: 1.6551653146743774
     wrist_angle: 0.7623884677886963
     wrist_rotate: -0.14112623035907745
-  p1:
-    waist: 0.0
-    shoulder: -1.88
-    elbow: 1.5
-    wrist_angle: 0.8
-    wrist_rotate: 0.0
-  p2:
-    waist: 0.0
-    shoulder: -1.88
-    elbow: 1.5
-    wrist_angle: 0.8
-    wrist_rotate: 0.0
-  TakeObject:
-    waist: 0.016873789951205254
-    shoulder: -2.018718719482422
-    elbow: 1.5984079837799072
-    wrist_angle: 0.9848157167434692
-    wrist_rotate: 0.0
-  MoveRight:
-    waist: -0.030679617077112198
-    shoulder: -2.0171847343444824
-    elbow: 1.653631329536438
-    wrist_angle: 0.699495255947113
-    wrist_rotate: 0.003067961661145091
-  Grab:
-    waist: 0.019941750913858414
-    shoulder: -2.0141167640686035
-    elbow: 1.604543924331665
-    wrist_angle: 0.977145791053772
-    wrist_rotate: -0.006135923322290182
-  RightDrink:
-    waist: 0.01840776950120926
-    shoulder: -2.0110487937927246
-    elbow: 1.6751071214675903
-    wrist_angle: 0.6504078507423401
-    wrist_rotate: -0.14879614114761353
