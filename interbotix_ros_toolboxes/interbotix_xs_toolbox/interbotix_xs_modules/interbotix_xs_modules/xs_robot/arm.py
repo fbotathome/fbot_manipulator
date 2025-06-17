@@ -82,7 +82,7 @@ def get_targets_from_yaml(file_path):
         print(f"Error: The file {file_path} was not found.")
         return 'error'
 #File path to the yaml file
-file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/test_1032.yaml'
+file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/pose.yaml'
 
 ARM_POSE = get_targets_from_yaml(file_path)
 print(ARM_POSE)
