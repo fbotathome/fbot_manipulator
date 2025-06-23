@@ -108,17 +108,18 @@ class ArmJointStateSaver(Node):
         keys_to_remove = {'gripper', 'left_finger', 'right_finger'}
         keep_saving = True
         while rclpy.ok():
-            success, message = wait_for_message(msg_type= JointState, node=self, topic='/wx200/joint_states', time_to_wait=10)
-            if not success:
-                self.get_logger().warning("No pose received from topic yet.")
-                continue
+            arm_name = input("Move the arm to the desired pose and enter its name (e.g., 'PrePickup', 'LookToGarbage'): ")
+            success, message = wait_for_message(msg_type= JointState, node=self, topic='/wx200/joint_states', time_to_wait=2)
             joints = message.name
             values = message.position
             self.joints_values = tuple(zip(joints,values))
             filtered_joints_values = [(k, v) for k, v in self.joints_values if k not in keys_to_remove]
             self.get_logger().info(f"Received msg: {filtered_joints_values}")
             self.current_pose = filtered_joints_values
-            arm_name = input("Move the arm to the desired pose and enter its name (e.g., 'PrePickup', 'LookToGarbage'): ")
+
+            if not success:
+                self.get_logger().warning("No pose received from topic yet.")
+                continue
     
             if not arm_name: 
                 self.get_logger().warning("No name provided, skipping pose.")
