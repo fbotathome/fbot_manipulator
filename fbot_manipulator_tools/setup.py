@@ -21,7 +21,6 @@ setup(
     entry_points={
         'console_scripts': [
             'manipulator_saver = fbot_manipulator_tools.save_wx200_arm_pose:main',
-
         ],
     },
 )

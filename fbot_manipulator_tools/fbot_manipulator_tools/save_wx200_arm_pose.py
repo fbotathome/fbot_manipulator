@@ -33,9 +33,6 @@ OrderedLoader.add_constructor(
     ConstructorOrderedDictionary
 )
 
-
-
-
 class ArmJointStateSaver(Node):
     '''
     @class ArmJointStateSaver
