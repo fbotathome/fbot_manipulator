@@ -171,7 +171,7 @@ class ArmJointStateSaver(Node):
 
 def main(args=None) -> None:
     rclpy.init(args=args)
-    saver = ArmJointStateSaver(node_name = 'arm')
+    saver = ArmJointStateSaver(node_name = 'wx200ArmPoseSaver')
     rclpy.spin_once(saver)
     saver.destroy_node()
     rclpy.shutdown()
