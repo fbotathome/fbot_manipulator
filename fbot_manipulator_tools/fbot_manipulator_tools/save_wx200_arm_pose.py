@@ -110,7 +110,7 @@ class ArmJointStateSaver(Node):
             joints = message.name
             values = message.position
             self.joints_values = tuple(zip(joints,values))
-            filtered_joints_values = [(k, v) for k, v in self.joints_values if k not in keys_to_remove]
+            filtered_joints_values = [(key, value) for key, value in self.joints_values if key not in keys_to_remove]
             self.get_logger().info(f"Received msg: {filtered_joints_values}")
             self.current_pose = filtered_joints_values
 
@@ -171,7 +171,7 @@ class ArmJointStateSaver(Node):
 
 def main(args=None) -> None:
     rclpy.init(args=args)
-    saver = ArmJointStateSaver(node_name = 'arm')
+    saver = ArmJointStateSaver(node_name = 'wx200ArmPoseSaver')
     rclpy.spin_once(saver)
     saver.destroy_node()
     rclpy.shutdown()
