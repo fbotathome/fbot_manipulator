@@ -56,6 +56,7 @@ import rclpy
 from rclpy.constants import S_TO_NS
 from rclpy.duration import Duration
 from rclpy.logging import LoggingSeverity
+import rclpy.node
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 
@@ -79,7 +80,7 @@ def get_targets_from_yaml(file_path):
             dict = {name: list(pose.values()) for name, pose in poses.items()}
             return dict
     except FileNotFoundError:
-        print(f"Error: The file {file_path} was not found.")
+        rclpy.Node.get_logger().warn(f"Error: The file {file_path} was not found.")
         return 'error'
 #File path to the yaml file
 file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/pose.yaml'
