@@ -1,0 +1,47 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/fbot/fbot_ws/install/sick_scan_xd/include/**",
+        "/home/fbot/fbot_ws/install/moveit_visual_tools/include/**",
+        "/home/fbot/fbot_ws/install/interbotix_xs_rviz/include/**",
+        "/home/fbot/fbot_ws/install/interbotix_xs_ros_control/include/**",
+        "/home/fbot/fbot_ws/install/interbotix_xs_msgs/include/**",
+        "/home/fbot/fbot_ws/install/interbotix_xs_driver/include/**",
+        "/home/fbot/fbot_ws/install/interbotix_perception_msgs/include/**",
+        "/home/fbot/fbot_ws/install/interbotix_moveit_interface_msgs/include/**",
+        "/home/fbot/fbot_ws/install/hoverboard_driver/include/**",
+        "/home/fbot/fbot_ws/install/fbot_world_msgs/include/**",
+        "/home/fbot/fbot_ws/install/fbot_vision_msgs/include/**",
+        "/home/fbot/fbot_ws/install/fbot_speech_msgs/include/**",
+        "/home/fbot/fbot_ws/install/dynamixel_workbench_toolbox/include/**",
+        "/home/fbot/fbot_ws/install/audio_common_msgs/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/fbot/fbot_ws/src/audio_common/audio_common/include/**",
+        "/home/fbot/fbot_ws/src/fbot_hri/fbot_speech/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_core/interbotix_ros_xseries/dynamixel_workbench_toolbox/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_driver/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_sdk/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_toolboxes/interbotix_common_toolbox/interbotix_gravity_compensation/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_toolboxes/interbotix_common_toolbox/interbotix_moveit_interface/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_toolboxes/interbotix_common_toolbox/interbotix_tf_tools/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_ros_control/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_rviz/include/**",
+        "/home/fbot/fbot_ws/src/fbot_manipulator/moveit_visual_tools/include/**",
+        "/home/fbot/fbot_ws/src/joy2twist/joy2twist/include/**",
+        "/home/fbot/fbot_ws/src/sick_scan_xd/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
