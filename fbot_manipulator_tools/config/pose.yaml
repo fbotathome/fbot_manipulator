@@ -1,0 +1,19 @@
+poses:
+  Sleep:
+    waist: 0.0
+    shoulder: -1.8799999952316284
+    elbow: 1.5
+    wrist_angle: 0.800000011920929
+    wrist_rotate: 0.0
+  Home:
+    waist: 0.0
+    shoulder: 0.0
+    elbow: 0.0
+    wrist_angle: 0.0
+    wrist_rotate: 0.0
+  Middle:
+    waist: 0.0
+    shoulder: -0.9650666642189026
+    elbow: 0.77
+    wrist_angle: 0.4106666727860768
+    wrist_rotate: 0.0

@@ -36,9 +36,11 @@ These classes can be used to control an X-Series standalone arm using Python.
 
 import math
 import sys
-from typing import Any, List, Tuple, Union
 import yaml
 
+from ament_index_python.packages import get_package_share_directory
+
+from typing import Any, List, Tuple, Union
 import interbotix_common_modules.angle_manipulation as ang
 from interbotix_common_modules.common_robot.robot import InterbotixRobotNode
 from interbotix_xs_modules.xs_robot import mr_descriptions as mrd
@@ -83,7 +85,7 @@ def get_targets_from_yaml(file_path):
         rclpy.Node.get_logger().warn(f"Error: The file {file_path} was not found.")
         return 'error'
 #File path to the yaml file
-file_path = '/home/fbot/fbot_ws/src/fbot_manipulator/config/pose.yaml'
+file_path = get_package_share_directory('fbot_manipulator_tools') + '/config/pose.yaml'
 
 ARM_POSE = get_targets_from_yaml(file_path)
 class InterbotixManipulatorXS:
