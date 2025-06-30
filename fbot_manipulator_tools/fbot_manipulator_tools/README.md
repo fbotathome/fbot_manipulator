@@ -1,10 +1,10 @@
 # fbot_manipulator_tools
 
-## Visão Geral
+## Overview
 
-este pacote tem um nodo para salvar poses do braço WX200. O pacote permite aos usuários capturar e armazenar configurações de juntas do braço robótico para uso posterior em aplicações de manipulação.
+This package contains a node for saving WX200 arm poses. The package allows users to capture and store robotic arm joint configurations for later use in manipulation applications.
 
-## Estrutura do Pacote
+## Package Structure
 
 ```
 fbot_manipulator_tools/
@@ -18,46 +18,46 @@ fbot_manipulator_tools/
     └── fbot_manipulator_tools
 ```
 
-## Funcionalidades
+## Features
 
 ### `save_wx200_arm_pose.py`
 
-Este módulo implementa o nodo `ArmJointStateSaver` que permite salvar poses do braço WX200 em um arquivo YAML para uso posterior.
+This module implements the `ArmJointStateSaver` node that allows saving WX200 arm poses to a YAML file for later use.
 
-#### Características Principais:
+#### Key Features:
 
-- **Desabilitação Segura do Torque**: O nó desabilita automaticamente o torque do braço para permitir manipulação manual
-- **Captura de Estados das Juntas**: Captura as posições atuais de todas as juntas do braço (excluindo o gripper)
-- **Salvamento em YAML**: Armazena as poses nomeadas em formato YAML estruturado
-- **Interface Interativa**: Interface de linha de comando intuitiva para nomear e salvar poses
+- **Safe Torque Disabling**: The node automatically disables arm torque to allow manual manipulation
+- **Joint State Capture**: Captures current positions of all arm joints (excluding gripper)
+- **YAML Saving**: Stores named poses in structured YAML format
+- **Interactive Interface**: Intuitive command-line interface for naming and saving poses
 
-## Como Usar
+## How to Use
 
-### Pré-requisitos
+### Prerequisites
 
-1. Certifique-se de que o braço WX200 esteja conectado e funcionando
-2. Lance o pacote de controle do braço:
+1. Ensure the WX200 arm is connected and functioning
+2. Launch the arm control package:
    ```bash
    ros2 launch interbotix_xsarm_control xsarm_control.launch.py robot_model:=wx200
    ```
 
-### Executando o Nó de Salvamento de Poses
+### Running the Pose Saving Node
 
-1. Execute o nó de salvamento:
+1. Execute the saving node:
    ```bash
    ros2 run fbot_manipulator_tools manipulator_saver
    ```
 
-2. Siga as instruções na tela:
-   - Confirme que o braço está na posição sleep antes de desabilitar o torque
-   - Especifique o nome do arquivo YAML (ex: `arm_poses.yaml`)
-   - Mova o braço manualmente para a pose desejada
-   - Digite um nome para a pose (ex: 'PrePickup', 'LookToGarbage')
-   - Escolha se deseja adicionar mais poses
+2. Follow the on-screen instructions:
+   - Confirm that the arm is in sleep position before disabling torque
+   - Specify the YAML file name (e.g., `arm_poses.yaml`)
+   - Manually move the arm to the desired pose
+   - Enter a name for the pose (e.g., 'PrePickup', 'LookToGarbage')
+   - Choose whether to add more poses
 
-3. O arquivo será salvo no diretório config do workspace
+3. The file will be saved in the workspace config directory
 
-### Exemplo de Uso
+### Usage Example
 
 ```bash
 $ ros2 run fbot_manipulator_tools manipulator_saver
@@ -73,9 +73,9 @@ Do you want to add more poses? (y/n): n
 [INFO] [wx200ArmPoseSaver]: Poses saved to my_poses.yaml. Shutting down node.
 ```
 
-### Formato do Arquivo YAML
+### YAML File Format
 
-O arquivo gerado terá a seguinte estrutura:
+The generated file will have the following structure:
 
 ```yaml
 poses:
@@ -93,9 +93,8 @@ poses:
     wrist_rotate: 0.0
 ```
 
-## Segurança
+## Safety
 
-⚠️ **Aviso Importante**: 
-- **Sempre certifique-se de que o braço está em uma posição segura (sleep) antes de desabilitar o torque**
-
-- O torque será automaticamente reabilitado após salvar todas as poses o braço não ira voltar para a posição de sleep
+⚠️ **Important Warning**: 
+- **Always ensure the arm is in a safe position (sleep) before disabling torque**
+- Torque will be automatically re-enabled after saving all poses - the arm will not return to sleep position
