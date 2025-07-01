@@ -1,0 +1,13 @@
+poses:
+  PrePickHigh:
+    waist: -0.07363107800483704
+    shoulder: -1.1351457834243774
+    elbow: -0.20862139761447906
+    wrist_angle: 1.3222914934158325
+    wrist_rotate: 0.03528155758976936
+  Sleep:
+    waist: 0.0
+    shoulder: -1.85
+    elbow: -1.55
+    wrist_angle: 0.0
+    wrist_rotate: -0.8

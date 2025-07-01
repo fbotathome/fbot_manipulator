@@ -73,7 +73,6 @@ REV: float = 2 * np.pi
     The joint order is: [waist, shoulder, elbow, wrist_angle, wrist_rotate]
 """
 
-
 def get_targets_from_yaml(file_path):
     try:
         with open(file_path, 'r') as file:
