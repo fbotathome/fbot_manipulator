@@ -83,3 +83,15 @@ poses:
     elbow: -0.22396120429039001
     wrist_angle: 1.8054953813552856
     wrist_rotate: 0.02147573232650757
+  PrePickHigh:
+    waist: -0.02147573232650757
+    shoulder: -1.0246992111206055
+    elbow: -0.3804272413253784
+    wrist_angle: 1.5048352479934692
+    wrist_rotate: 0.003067961661145091
+  PlaceObjectDishwasher:
+    waist: -0.04908738657832146
+    shoulder: 0.3206019997596741
+    elbow: -0.16106799244880676
+    wrist_angle: 1.4035924673080444
+    wrist_rotate: 0.05368933081626892
