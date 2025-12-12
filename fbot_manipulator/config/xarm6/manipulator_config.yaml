@@ -1,0 +1,19 @@
+moveit_controllers:
+  traj: xarm_traj_controller
+  gripper_traj: xarm_gripper
+
+joints:
+  arm_joints:
+    - joint1
+    - joint2
+    - joint3
+    - joint4
+    - joint5
+    - joint6
+  gripper_joints: 
+    - drive_joint
+
+poses:
+  home: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  holdup: [0.0, 0.0, 0.0, 0.0, -1.57, 0.0]
+

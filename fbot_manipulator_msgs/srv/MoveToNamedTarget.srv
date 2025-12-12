@@ -1,0 +1,9 @@
+# This format is suitable for the following services
+#   - move_to_named_target
+
+string target_name
+
+---
+
+bool success
+string message
