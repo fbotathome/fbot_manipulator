@@ -33,7 +33,7 @@ def generate_launch_description():
     manipulator_interface_node = Node(
         package="fbot_manipulator",
         executable="manipulator_interface_node",
-        namespace=namespace,
+        #namespace=namespace,
         name="manipulator_interface",
         parameters=[
             {"arm_type": arm_type},

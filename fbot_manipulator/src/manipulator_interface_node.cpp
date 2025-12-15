@@ -1,4 +1,3 @@
-// includes
 #include <signal.h>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
@@ -7,7 +6,6 @@
 #include <fbot_manipulator_msgs/srv/move_joint.hpp>
 #include <fbot_manipulator_msgs/srv/move_to_pose.hpp>
 
-// include the base + xarm derived
 #include "fbot_manipulator/motion_primitives_base.hpp"
 #include "fbot_manipulator/motion_primitives_xarm.hpp"
 
@@ -15,14 +13,22 @@
 
 namespace fbot_manipulator
 {
-
+/**
+ *  @brief Interface node for manipulation services.
+ */
 class ManipulationInterface
 {
 public:
+    /**
+     * @brief Constructor 
+     */
     ManipulationInterface(rclcpp::Node::SharedPtr node);
     ~ManipulationInterface() {};
 
 private:
+    /**
+     * @brief Service callbacks
+     */
     void setGripperPositionCb(const std::shared_ptr<fbot_manipulator_msgs::srv::MoveGripper::Request> req, std::shared_ptr<fbot_manipulator_msgs::srv::MoveGripper::Response> res);
     void moveToNamedTargetCb(const std::shared_ptr<fbot_manipulator_msgs::srv::MoveToNamedTarget::Request> req, std::shared_ptr<fbot_manipulator_msgs::srv::MoveToNamedTarget::Response> res);
     void moveToJointTargetCb(const std::shared_ptr<fbot_manipulator_msgs::srv::MoveJoint::Request> req, std::shared_ptr<fbot_manipulator_msgs::srv::MoveJoint::Response> res);
