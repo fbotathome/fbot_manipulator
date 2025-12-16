@@ -18,7 +18,9 @@
 
 namespace fbot_manipulator
 {
-
+/*
+* @brief Base class for motion primitives. Robot-specific motion primitive classes should inherit from this class.
+*/
 class MotionPrimitivesBase
 {
 public:
@@ -29,7 +31,11 @@ public:
 
     void init();
 
-    // Generic API
+    /*
+    * @brief Set the gripper position
+    * @param position Desired gripper position
+    * @return true if the gripper reached the desired position, false otherwise
+    */
     bool setGripperPosition(double position);
 
     // Robot-specific motion primitives (must be implemented by derived class)
@@ -37,9 +43,25 @@ public:
     virtual bool moveToJointTarget(const std::vector<double>& joint_positions) = 0;
     virtual bool moveToPose(const geometry_msgs::msg::Pose& pose) = 0;
 
-    // Low-level motion functions
+    /*
+    * @brief Plan a joint target
+    * @param joint_target Desired joint positions
+    * @return true if planning was successful, false otherwise
+    */
     virtual bool planJointTarget(const std::vector<double>& joint_target);
+
+    /*
+    * @brief Plan a pose target
+    * @param pose_target Desired end-effector pose
+    * @return true if planning was successful, false otherwise
+    */
     virtual bool planPoseTarget(const geometry_msgs::msg::Pose& pose_target);
+
+    /*
+    * @brief Execute the planned path
+    * @param wait If true, wait for execution to complete 
+    * @return true if execution was successful, false otherwise
+    */
     virtual bool executePath(bool wait = true);
 
 protected:

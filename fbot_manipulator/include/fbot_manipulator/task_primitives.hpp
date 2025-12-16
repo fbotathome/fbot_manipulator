@@ -9,6 +9,9 @@
 namespace fbot_manipulator
 {
 
+/*
+* @brief High-level task primitives for manipulation tasks.
+*/
 class TaskPrimitives
 {
 public:
