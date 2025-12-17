@@ -45,7 +45,6 @@ private:
     rclcpp::Service<fbot_manipulator_msgs::srv::MoveToPose>::SharedPtr move_to_pose_server_;
 };
 
-// ctor
 ManipulationInterface::ManipulationInterface(rclcpp::Node::SharedPtr node)
     : node_(node)
 {
@@ -67,13 +66,13 @@ ManipulationInterface::ManipulationInterface(rclcpp::Node::SharedPtr node)
         throw std::runtime_error("Unsupported arm_type: " + arm_type);
     }
 
-    set_gripper_position_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveGripper>("set_gripper_position", BIND_CLS_CB(&ManipulationInterface::setGripperPositionCb));
+    set_gripper_position_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveGripper>("fbot_manipulator/set_gripper_position", BIND_CLS_CB(&ManipulationInterface::setGripperPositionCb));
 
-    move_to_named_target_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveToNamedTarget>("move_to_named_target", BIND_CLS_CB(&ManipulationInterface::moveToNamedTargetCb));
+    move_to_named_target_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveToNamedTarget>("fbot_manipulator/move_to_named_target", BIND_CLS_CB(&ManipulationInterface::moveToNamedTargetCb));
 
-    move_joint_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveJoint>("move_joint", BIND_CLS_CB(&ManipulationInterface::moveToJointTargetCb));
+    move_joint_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveJoint>("fbot_manipulator/move_joint", BIND_CLS_CB(&ManipulationInterface::moveToJointTargetCb));
 
-    move_to_pose_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveToPose>("move_to_pose", BIND_CLS_CB(&ManipulationInterface::moveToPoseCb));
+    move_to_pose_server_ = node_->create_service<fbot_manipulator_msgs::srv::MoveToPose>("fbot_manipulator/move_to_pose", BIND_CLS_CB(&ManipulationInterface::moveToPoseCb));
 }
 
 void ManipulationInterface::setGripperPositionCb(const std::shared_ptr<fbot_manipulator_msgs::srv::MoveGripper::Request> req, std::shared_ptr<fbot_manipulator_msgs::srv::MoveGripper::Response> res)
