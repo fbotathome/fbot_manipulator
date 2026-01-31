@@ -212,9 +212,9 @@ ros2 service call /fbot_manipulator/set_gripper_position \
 3. Add the arm type case to `manipulator_interface_node.cpp`
 4. Launch with `arm_type:=<robot_name>`
 
-## Dependencies
+## Contributing
 
-- ROS 2 Humble
-- MoveIt 2
-- MoveIt Task Constructor
-- xarm_msgs (for xArm gripper control)
+1. Create a feature branch (`git checkout -b feat/amazing-feature`)
+2. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Push to the branch (`git push origin feat/amazing-feature`)
+4. Open a Pull Request
