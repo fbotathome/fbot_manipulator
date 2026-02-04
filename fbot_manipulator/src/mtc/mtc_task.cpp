@@ -35,8 +35,10 @@ void MtcTask::loadConfig()
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
     // First translate along Z (which becomes the approach direction after rotation)
     config_.grasp_frame_transform.translate(Eigen::Vector3d(0, 0, grasp_offset));
+    // Rotate to align gripper approach direction, then flip 180° around Z to correct wrist orientation
     config_.grasp_frame_transform.rotate(
-        Eigen::AngleAxisd(-M_PI / 2, Eigen::Vector3d::UnitY()));
+        Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()) *
+        Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ()));
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Grasp offset: %.3f m", task_name_.c_str(), grasp_offset);
 
