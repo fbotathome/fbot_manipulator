@@ -1,7 +1,5 @@
 <img width="5848" height="719" alt="fbot_manipulator" src="https://github.com/user-attachments/assets/c73b64f3-05bf-47c7-bb67-3e38c7f4161a" />
 
-# fbot_manipulator
-
 ROS 2 packages for robot arm manipulation, providing both low-level motion primitives (via services) and high-level task planning (via MoveIt Task Constructor actions).
 
 ## Packages
