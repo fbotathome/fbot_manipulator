@@ -83,6 +83,7 @@ bool MtcPickTask::buildTask()
             wrapper->setMinSolutionDistance(0.5);
             wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
             wrapper->setTimeout(2.0);
+            wrapper->setIgnoreCollisions(true);
             wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
             wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
             container->insert(std::move(wrapper));

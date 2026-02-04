@@ -11,6 +11,7 @@ manipulation_task_server:
       lift_min: 0.08
       lift_max: 0.15
       retreat_min: 0.08
-      retreat_max: 0.15
+      retreat_max: 0.25
       max_solutions: 5
       grasp_angle_delta: 0.785
+      grasp_offset: -0.05 

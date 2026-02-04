@@ -28,10 +28,17 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.max_solutions", config_.max_solutions, config_.max_solutions);
     node_->get_parameter_or("mtc.grasp_angle_delta", config_.grasp_angle_delta, config_.grasp_angle_delta);
 
-    // Grasp frame: rotate Z to point out of gripper
+    // Grasp frame: rotate Z to point out of gripper with offset
+    double grasp_offset = 0.0;
+    node_->get_parameter_or("mtc.grasp_offset", grasp_offset, 0.0);
+
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
+    // First translate along Z (which becomes the approach direction after rotation)
+    config_.grasp_frame_transform.translate(Eigen::Vector3d(0, 0, grasp_offset));
     config_.grasp_frame_transform.rotate(
         Eigen::AngleAxisd(-M_PI / 2, Eigen::Vector3d::UnitY()));
+
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Grasp offset: %.3f m", task_name_.c_str(), grasp_offset);
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Config loaded: arm='%s', hand='%s', frame='%s'",
                 task_name_.c_str(),
