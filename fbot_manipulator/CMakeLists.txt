@@ -74,8 +74,8 @@ ament_target_dependencies(manipulation_task_server
   fbot_manipulator_msgs
 )
 
-add_executable(bottle_collision src/collision/bottle_collision.cpp)
-ament_target_dependencies(bottle_collision
+add_executable(add_object_collision src/collision/add_object_collision.cpp)
+ament_target_dependencies(add_object_collision
   rclcpp
   visualization_msgs
   geometry_msgs
@@ -95,7 +95,7 @@ ament_target_dependencies(shelf_collision
 install(TARGETS
   manipulator_interface_node
   manipulation_task_server
-  bottle_collision
+  add_object_collision
   shelf_collision
   DESTINATION lib/${PROJECT_NAME}
 )
