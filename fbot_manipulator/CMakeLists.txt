@@ -21,6 +21,11 @@ find_package(rclcpp_action REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(moveit_msgs REQUIRED)
+find_package(shape_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 include_directories(
   include
@@ -69,13 +74,35 @@ ament_target_dependencies(manipulation_task_server
   fbot_manipulator_msgs
 )
 
+add_executable(bottle_collision src/collision/bottle_collision.cpp)
+ament_target_dependencies(bottle_collision
+  rclcpp
+  visualization_msgs
+  geometry_msgs
+  moveit_msgs
+  shape_msgs
+  tf2_ros
+  tf2_geometry_msgs
+)
+add_executable(shelf_collision src/collision/shelf_collision.cpp)
+ament_target_dependencies(shelf_collision
+  rclcpp
+  moveit_ros_planning_interface
+  moveit_msgs
+  shape_msgs
+  geometry_msgs
+)
 install(TARGETS
   manipulator_interface_node
   manipulation_task_server
-  DESTINATION lib/${PROJECT_NAME})
+  bottle_collision
+  shelf_collision
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY src/mesh DESTINATION share/${PROJECT_NAME})
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
