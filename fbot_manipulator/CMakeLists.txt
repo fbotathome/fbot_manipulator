@@ -40,8 +40,17 @@ ament_target_dependencies(manipulator_interface_node
 
 target_link_libraries(manipulator_interface_node yaml-cpp)
 
+add_executable(save_arm_pose
+  src/utils/save_arm_pose.cpp
+)
+ament_target_dependencies(save_arm_pose
+  rclcpp
+  std_msgs
+)
+
 install(TARGETS
   manipulator_interface_node
+  save_arm_pose
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
