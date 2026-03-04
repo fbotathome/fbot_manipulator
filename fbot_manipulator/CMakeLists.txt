@@ -17,6 +17,8 @@ find_package(fbot_manipulator_msgs REQUIRED)
 find_package(xarm_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+find_package(sensor_msgs REQUIRED)
+
 include_directories(
   include
   ${ament_INCLUDE_DIRS}
@@ -45,7 +47,7 @@ add_executable(save_arm_pose
 )
 ament_target_dependencies(save_arm_pose
   rclcpp
-  std_msgs
+  sensor_msgs
 )
 
 install(TARGETS
