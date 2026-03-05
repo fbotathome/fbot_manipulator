@@ -20,6 +20,7 @@ public:
         this->declare_parameter<std::string>(
             "xacro_path",
             "/home/insider/fbot_ws/src/xarm_ros2/xarm_moveit_config/srdf/_xarm6_macro.srdf.xacro");
+            //TODO: Change that value in robot
         xacro_path_ = this->get_parameter("xacro_path").as_string();
 
         group_name_ = "${prefix}xarm6";
