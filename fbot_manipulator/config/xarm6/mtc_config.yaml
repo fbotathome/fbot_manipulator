@@ -1,0 +1,17 @@
+manipulation_task_server:
+  ros__parameters:
+    mtc:
+      arm_group_name: "xarm6"
+      hand_group_name: "xarm_gripper"
+      hand_frame: "link_tcp"
+      world_frame: "world"
+      surface_link: "world"
+      approach_min: 0.05
+      approach_max: 0.15
+      lift_min: 0.08
+      lift_max: 0.15
+      retreat_min: 0.08
+      retreat_max: 0.25
+      max_solutions: 5
+      grasp_angle_delta: 0.785
+      grasp_offset: -0.05 

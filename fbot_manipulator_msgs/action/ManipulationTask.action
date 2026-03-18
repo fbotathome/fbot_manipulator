@@ -1,0 +1,24 @@
+# Goal
+uint8 PICK=0
+uint8 PLACE=1
+uint8 PICK_AND_PLACE=2
+
+uint8 task_type
+
+# Object info (from vision Detection3D bbox)
+string object_id
+geometry_msgs/Pose object_pose        # center of bounding box
+geometry_msgs/Vector3 object_size     # bounding box dimensions (x, y, z)
+
+# Target place pose (used for PLACE and PICK_AND_PLACE)
+geometry_msgs/Pose place_pose
+
+---
+# Result
+bool success
+string message
+
+---
+# Feedback
+string current_stage
+float32 progress

@@ -13,6 +13,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/MoveToNamedTarget.srv"
   "srv/MoveJoint.srv"
   "srv/MoveToPose.srv"
+  "action/ManipulationTask.action"
   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
 )
 
