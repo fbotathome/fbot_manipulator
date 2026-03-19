@@ -8,10 +8,10 @@ manipulation_task_server:
       surface_link: "world"
       approach_min: 0.05
       approach_max: 0.15
-      lift_min: 0.08
+      lift_min: 0.05
       lift_max: 0.15
-      retreat_min: 0.08
+      retreat_min: 0.05
       retreat_max: 0.25
       max_solutions: 5
-      grasp_angle_delta: 0.785
-      grasp_offset: -0.05 
+      grasp_angle_delta: 0.262
+      grasp_offset: -0.01

@@ -44,7 +44,7 @@ bool MtcPickAndPlaceTask::buildTask()
             mtc::stages::Connect::GroupPlannerVector{
                 { config_.arm_group_name, pipeline_planner_ }
             });
-        stage->setTimeout(3.0);
+        stage->setTimeout(5.0);
         stage->properties().configureInitFrom(mtc::Stage::PARENT);
         task_.add(std::move(stage));
     }
@@ -82,10 +82,10 @@ bool MtcPickAndPlaceTask::buildTask()
             stage->setMonitoredStage(current_state);
 
             auto wrapper = std::make_unique<mtc::stages::ComputeIK>("grasp pose IK", std::move(stage));
-            wrapper->setMaxIKSolutions(2);
-            wrapper->setMinSolutionDistance(0.5);
+            wrapper->setMaxIKSolutions(8);
+            wrapper->setMinSolutionDistance(0.2);
             wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-            wrapper->setTimeout(2.0);
+            wrapper->setTimeout(5.0);
             wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
             wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
             container->insert(std::move(wrapper));
@@ -168,21 +168,6 @@ bool MtcPickAndPlaceTask::buildTask()
         task_.properties().exposeTo(container->properties(), { "eef", "group", "ik_frame" });
         container->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group", "ik_frame" });
 
-        // Lower
-        {
-            auto stage = std::make_unique<mtc::stages::MoveRelative>("lower object", cartesian_planner_);
-            stage->properties().set("marker_ns", "lower");
-            stage->properties().set("link", config_.hand_frame);
-            stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-            stage->setMinMaxDistance(config_.lift_min, config_.lift_max);
-
-            geometry_msgs::msg::Vector3Stamped vec;
-            vec.header.frame_id = config_.world_frame;
-            vec.vector.z = -1.0;
-            stage->setDirection(vec);
-            container->insert(std::move(stage));
-        }
-
         // Generate Place Pose + IK
         {
             auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate place pose");
@@ -198,9 +183,8 @@ bool MtcPickAndPlaceTask::buildTask()
 
             auto wrapper = std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(stage));
             wrapper->setMaxIKSolutions(4);
-            wrapper->setMinSolutionDistance(0.5);
+            wrapper->setMinSolutionDistance(0.2);
             wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-            wrapper->setTimeout(2.0);
             wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
             wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
             container->insert(std::move(wrapper));
@@ -252,9 +236,9 @@ bool MtcPickAndPlaceTask::buildTask()
 
     // ---- Return Home ----
     {
-        auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
+        auto stage = std::make_unique<mtc::stages::MoveTo>("return home", joint_planner_);
         stage->setGroup(config_.arm_group_name);
-        stage->setGoal("home");
+        stage->setGoal("hold-up");
         task_.add(std::move(stage));
     }
 
