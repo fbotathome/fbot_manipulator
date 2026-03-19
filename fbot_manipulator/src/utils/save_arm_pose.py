@@ -5,6 +5,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.wait_for_message import wait_for_message
 
+from xarm.wrapper import XArmAPI
+
 from sensor_msgs.msg import JointState
 
 class SaveArmPose(Node):
@@ -26,6 +28,12 @@ class SaveArmPose(Node):
         self.default_arm_joint_order = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
         self.arm_joint_order = self.loadArmJointOrder()
 
+
+    def set_arm_mode(self, mode):
+        arm = XArmAPI("192.168.1.208")
+        arm.set_mode(mode)  # Set to position control mode
+        arm.set_state(0)  # Set to ready state
+        
     def loadArmJointOrder(self):
         if not os.path.exists(self.xacro_path):
             self.get_logger().warning(
@@ -83,6 +91,7 @@ class SaveArmPose(Node):
 
     def savePose(self) -> None:
         while rclpy.ok():
+            self.set_arm_mode(2)
             arm_name = input("Move the arm to the desired pose and enter its name (e.g., 'PrePickup', 'LookToGarbage'): ").strip()
             if not arm_name:
                 self.get_logger().warning("Pose name cannot be empty. Pose not saved.")
@@ -121,6 +130,7 @@ class SaveArmPose(Node):
 
             save_more = input("Do you want to add more poses? (y/n): ").strip().lower()
             if save_more in ('n', 'no'):
+                self.set_arm_mode(0)
                 break
             elif save_more in ('y', 'yes'):
                 continue
