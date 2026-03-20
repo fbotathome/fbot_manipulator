@@ -22,6 +22,8 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+find_package(sensor_msgs REQUIRED)
+
 include_directories(
   include
   ${ament_INCLUDE_DIRS}
