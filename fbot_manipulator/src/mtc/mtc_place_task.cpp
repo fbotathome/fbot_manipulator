@@ -12,6 +12,15 @@ MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
 {
 }
 
+MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
+                           const std::string& object_id,
+                           const std::string& place_pose_name)
+    : MtcTask("place", node),
+      object_id_(object_id),
+      place_pose_name_(place_pose_name)
+{
+}
+
 bool MtcPlaceTask::buildTask()
 {
     task_.stages()->setName("place_" + object_id_);
@@ -47,42 +56,55 @@ bool MtcPlaceTask::buildTask()
         task_.properties().exposeTo(container->properties(), { "eef", "group", "ik_frame" });
         container->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group", "ik_frame" });
 
-        // Lower
+        if (place_pose_name_.empty())
         {
-            auto stage = std::make_unique<mtc::stages::MoveRelative>("lower object", cartesian_planner_);
-            stage->properties().set("marker_ns", "lower");
-            stage->properties().set("link", config_.hand_frame);
-            stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-            stage->setMinMaxDistance(config_.lift_min, config_.lift_max);
+            // Lower
+            {
+                auto stage = std::make_unique<mtc::stages::MoveRelative>("lower object", cartesian_planner_);
+                stage->properties().set("marker_ns", "lower");
+                stage->properties().set("link", config_.hand_frame);
+                stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
+                stage->setMinMaxDistance(config_.lift_min, config_.lift_max);
 
-            geometry_msgs::msg::Vector3Stamped vec;
-            vec.header.frame_id = config_.world_frame;
-            vec.vector.z = -1.0;
-            stage->setDirection(vec);
-            container->insert(std::move(stage));
+                geometry_msgs::msg::Vector3Stamped vec;
+                vec.header.frame_id = config_.world_frame;
+                vec.vector.z = -1.0;
+                stage->setDirection(vec);
+                container->insert(std::move(stage));
+            }
+
+            // Generate Place Pose + IK
+            {
+                auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate place pose");
+                stage->properties().configureInitFrom(mtc::Stage::PARENT);
+                stage->properties().set("marker_ns", "place_pose");
+                stage->setObject(object_id_);
+
+                geometry_msgs::msg::PoseStamped target;
+                target.header.frame_id = config_.world_frame;
+                target.pose = place_pose_;
+                stage->setPose(target);
+                stage->setMonitoredStage(attach_object_stage);
+
+                auto wrapper = std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(stage));
+                wrapper->setMaxIKSolutions(4);
+                wrapper->setMinSolutionDistance(0.5);
+                wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
+                wrapper->setTimeout(2.0);
+                wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
+                wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
+                container->insert(std::move(wrapper));
+            }
         }
-
-        // Generate Place Pose + IK
+        else
         {
-            auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate place pose");
-            stage->properties().configureInitFrom(mtc::Stage::PARENT);
-            stage->properties().set("marker_ns", "place_pose");
-            stage->setObject(object_id_);
-
-            geometry_msgs::msg::PoseStamped target;
-            target.header.frame_id = config_.world_frame;
-            target.pose = place_pose_;
-            stage->setPose(target);
-            stage->setMonitoredStage(attach_object_stage);
-
-            auto wrapper = std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(stage));
-            wrapper->setMaxIKSolutions(4);
-            wrapper->setMinSolutionDistance(0.5);
-            wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-            wrapper->setTimeout(2.0);
-            wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
-            wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
-            container->insert(std::move(wrapper));
+            // Move to named SRDF state
+            {
+                auto stage = std::make_unique<mtc::stages::MoveTo>("move to place pose", pipeline_planner_);
+                stage->setGroup(config_.arm_group_name);
+                stage->setGoal(place_pose_name_);
+                container->insert(std::move(stage));
+            }
         }
 
         // Open gripper
