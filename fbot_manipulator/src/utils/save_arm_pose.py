@@ -15,7 +15,7 @@ class SaveArmPose(Node):
 
         self.declare_parameter(
             "xacro_path",
-            "/home/insider/fbot_ws/src/xarm_ros2/xarm_moveit_config/srdf/_xarm6_macro.srdf.xacro",
+            "/home/fbot/fbot_ws/src/xarm_ros2/xarm_moveit_config/srdf/_xarm6_macro.srdf.xacro",
         )
         self.xacro_path = self.get_parameter("xacro_path").get_parameter_value().string_value
 
