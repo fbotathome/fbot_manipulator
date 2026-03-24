@@ -79,7 +79,7 @@ bool MtcPickTask::buildTask()
             stage->setMonitoredStage(current_state);
 
             auto wrapper = std::make_unique<mtc::stages::ComputeIK>("grasp pose IK", std::move(stage));
-            wrapper->setMaxIKSolutions(8);
+            wrapper->setMaxIKSolutions(4);
             wrapper->setMinSolutionDistance(0.2);
             wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
             wrapper->setTimeout(5.0);
