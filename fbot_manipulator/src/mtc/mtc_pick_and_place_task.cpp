@@ -159,6 +159,14 @@ bool MtcPickAndPlaceTask::buildTask()
         task_.add(std::move(container));
     }
 
+    // ---- Return Home before placing ----
+    {
+        auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
+        stage->setGroup(config_.arm_group_name);
+        stage->setGoal("hold-up");
+        task_.add(std::move(stage));
+    }
+
     if (place_pose_name_.empty())
     {
         // ---- Move to Place (Connect) ----
@@ -291,7 +299,7 @@ bool MtcPickAndPlaceTask::buildTask()
 
     // ---- Return Home ----
     {
-        auto stage = std::make_unique<mtc::stages::MoveTo>("return home", joint_planner_);
+        auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
         stage->setGoal("hold-up");
         task_.add(std::move(stage));
