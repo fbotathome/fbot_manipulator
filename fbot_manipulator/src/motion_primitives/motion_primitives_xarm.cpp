@@ -20,25 +20,28 @@ MotionPrimitivesXArm::MotionPrimitivesXArm(const std::string& arm_name)
     init();
 }
 
-bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name) //edit here
+bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
 {
-   static const std::string PLANNING_GROUP = "xarm6";
-   moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
-   
-    move_group.setNamedTarget(target_name);
+    bool success = move_group_->setNamedTarget(target_name);
+    if (!success) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to set named target: %s", target_name.c_str());
+        return false;
+    }
 
-    moveit::planning_interface::MoveGroupInterface::plan real_plan;
-    bool success = (move_group.plan(real_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    success = (move_group_->plan(plan_) == moveit::core::MoveItErrorCode::SUCCESS);
+    if (!success) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to plan to named target: %s", target_name.c_str());
+        return false;
+    }
 
- if (success) {
-    move_group.execute(my_plan);
-    ROS_INFO("Successfully moved to pose: %s", target_pose.c_str());
-  } else {
-    ROS_ERROR("Failed to plan to pose: %s", target_pose.c_str());
-  }
+    success = executePath();
+    if (!success) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to execute path to named target: %s", target_name.c_str());
+        return false;
+    }
 
-  ros::shutdown();
-  return 0;
+    RCLCPP_INFO(node_->get_logger(), "Successfully moved to named target: %s", target_name.c_str());
+    return true;
 }
 
 bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_positions)
