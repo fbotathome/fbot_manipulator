@@ -20,41 +20,25 @@ MotionPrimitivesXArm::MotionPrimitivesXArm(const std::string& arm_name)
     init();
 }
 
-bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
+bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name) //edit here
 {
-    auto poses = manipulator_config_["poses"];
-    if (!poses[target_name]) {
-        RCLCPP_ERROR(node_->get_logger(),
-                     "[MotionPrimitives] Named target '%s' not found in current manipulator config.",
-                     target_name.c_str());
-        return false;
-    }
+   static const std::string PLANNING_GROUP = "xarm6";
+   moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
+   
+    move_group.setNamedTarget(target_name);
 
-    auto target_joint_positions = poses[target_name].as<std::vector<double>>();
+    moveit::planning_interface::MoveGroupInterface::plan real_plan;
+    bool success = (move_group.plan(real_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
 
-    auto plan_success = planJointTarget(target_joint_positions);
+ if (success) {
+    move_group.execute(my_plan);
+    ROS_INFO("Successfully moved to pose: %s", target_pose.c_str());
+  } else {
+    ROS_ERROR("Failed to plan to pose: %s", target_pose.c_str());
+  }
 
-    if (plan_success == false) {
-        RCLCPP_ERROR(node_->get_logger(),
-            "[MotionPrimitives] plan_joint service failed");
-        return false;
-    }
-
-    RCLCPP_INFO(node_->get_logger(),
-                "[MotionPrimitives] plan_joint succeeded");
-
-    auto exec_success = executePath();
-
-    if (exec_success == false) {
-        RCLCPP_ERROR(node_->get_logger(),
-            "[MotionPrimitives] Execution service failed");
-        return false;
-    }
-
-    RCLCPP_INFO(node_->get_logger(),
-                "[MotionPrimitives] plan_exec service succeeded");
-
-    return true;
+  ros::shutdown();
+  return 0;
 }
 
 bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_positions)
