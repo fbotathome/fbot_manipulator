@@ -53,6 +53,8 @@ void MtcTask::setupSolvers()
 {
     pipeline_planner_ = std::make_shared<mtc::solvers::PipelinePlanner>(node_, "ompl");
     //pipeline_planner_->setPlannerId("RRTConnectkConfigDefault");
+    pipeline_planner_->setMaxVelocityScalingFactor(0.3);
+    pipeline_planner_->setMaxAccelerationScalingFactor(0.1);
 
     cartesian_planner_ = std::make_shared<mtc::solvers::CartesianPath>();
     cartesian_planner_->setMaxVelocityScalingFactor(0.5);
