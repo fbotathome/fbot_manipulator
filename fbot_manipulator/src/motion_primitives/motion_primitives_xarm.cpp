@@ -1,9 +1,5 @@
 #include "fbot_manipulator/motion_primitives_xarm.hpp"
 
-#include <chrono>
-#include <exception>
-
-using namespace std::chrono_literals;
 
 namespace fbot_manipulator
 {
@@ -21,7 +17,7 @@ MotionPrimitivesXArm::MotionPrimitivesXArm(const std::string& arm_name)
 }
 
 bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
-{
+{    
     bool success = move_group_->setNamedTarget(target_name);
     if (!success) {
         RCLCPP_ERROR(node_->get_logger(), "Failed to set named target: %s", target_name.c_str());
@@ -42,6 +38,7 @@ bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
 
     RCLCPP_INFO(node_->get_logger(), "Successfully moved to named target: %s", target_name.c_str());
     return true;
+
 }
 
 bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_positions)
