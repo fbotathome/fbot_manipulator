@@ -30,6 +30,7 @@ bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
         return false;
     }
 
+    is_trajectory_ = false;
     success = executePath();
     if (!success) {
         RCLCPP_ERROR(node_->get_logger(), "Failed to execute path to named target: %s", target_name.c_str());
