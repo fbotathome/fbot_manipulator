@@ -2,6 +2,7 @@ import os
 import re
 
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from rclpy.node import Node
 from rclpy.wait_for_message import wait_for_message
 
@@ -12,10 +13,20 @@ from sensor_msgs.msg import JointState
 class SaveArmPose(Node):
     def __init__(self):
         super().__init__("save_arm_pose")
+        workspace_src_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../../../")
+        )
+        default_xacro_path = os.path.join(
+            workspace_src_dir,
+            "xarm_ros2",
+            "xarm_moveit_config",
+            "srdf",
+            "_xarm6_macro.srdf.xacro",
+        )
 
         self.declare_parameter(
             "xacro_path",
-            "/home/insider/fbot_ws/src/xarm_ros2/xarm_moveit_config/srdf/_xarm6_macro.srdf.xacro",
+            default_xacro_path,
         )
         self.xacro_path = self.get_parameter("xacro_path").get_parameter_value().string_value
 
