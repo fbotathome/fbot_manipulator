@@ -12,6 +12,7 @@ from sensor_msgs.msg import JointState
 
 class SaveArmPose(Node):
     def __init__(self):
+        """@brief Initialize ROS interfaces and default target xacro path."""
         super().__init__("save_arm_pose")
         workspace_src_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "../../../../")
@@ -31,21 +32,22 @@ class SaveArmPose(Node):
         self.xacro_path = self.get_parameter("xacro_path").get_parameter_value().string_value
 
         self.subscription_ = self.create_subscription(JointState, "/joint_states", self.joint_state_callback, 10)
-        self.publisher_ = self.create_publisher(JointState, "/saved_arm_pose", 10)
         self.save_loop_started = False
         self.done_saving = False
 
         self.group_name = "${prefix}xarm6"
         self.default_arm_joint_order = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
         self.arm_joint_order = self.loadArmJointOrder()
+        self.arm = XArmAPI("192.168.1.208")
 
 
     def set_arm_mode(self, mode):
-        arm = XArmAPI("192.168.1.208")
-        arm.set_mode(mode)  # Set to position control mode
-        arm.set_state(0)  # Set to ready state
+        """@brief Set the physical xArm control mode and ready state."""
+        self.arm.set_mode(mode)  # Set to position control mode
+        self.arm.set_state(0)  # Set to ready state
         
     def loadArmJointOrder(self):
+        """@brief Load arm joint order from the configured xacro group_state block."""
         if not os.path.exists(self.xacro_path):
             self.get_logger().warning(
                 f"{self.xacro_path} not found. Using default order {self.default_arm_joint_order}."
@@ -87,11 +89,10 @@ class SaveArmPose(Node):
     
     
     def joint_state_callback(self, msg):
+        """@brief Start one interactive save session when joint states begin arriving."""
         if self.done_saving:
             return
             
-        self.publisher_.publish(msg)
-
         if not self.save_loop_started:
             self.save_loop_started = True
             self.get_logger().info("Starting pose save session...")
@@ -101,6 +102,7 @@ class SaveArmPose(Node):
             rclpy.shutdown()
 
     def savePose(self) -> None:
+        """@brief Interactively capture named poses from /joint_states and persist them."""
         while rclpy.ok():
             self.set_arm_mode(2)
             arm_name = input("Move the arm to the desired pose and enter its name (e.g., 'PrePickup', 'LookToGarbage'): ").strip()
@@ -150,6 +152,7 @@ class SaveArmPose(Node):
                 continue
 
     def findJointValue(self, joint_to_value, joint_name):
+        """@brief Find a joint value by exact name or unique suffix match."""
         if joint_name in joint_to_value:
             return float(joint_to_value[joint_name])
 
@@ -164,6 +167,7 @@ class SaveArmPose(Node):
         return None
 
     def formatGroupState(self, pose_name, pose_values):
+        """@brief Format a pose as an SRDF <group_state> XML block."""
         lines = [f'    <group_state name="{pose_name}" group="{self.group_name}">']
         for joint_name, joint_value in zip(self.arm_joint_order, pose_values):
             value_as_text = format(float(joint_value), ".17g")
@@ -174,6 +178,7 @@ class SaveArmPose(Node):
         return "\n".join(lines)
 
     def writeToXacro(self, pose_name, pose_values):
+        """@brief Insert or replace a named pose block in the target xacro file."""
         if not os.path.exists(self.xacro_path):
             self.get_logger().error(f"{self.xacro_path} does not exist. Pose not saved.")
             return False
@@ -219,6 +224,7 @@ class SaveArmPose(Node):
 
        
 def main(args=None):
+    """@brief Initialize ROS and run the SaveArmPose node lifecycle."""
     rclpy.init(args=args)
     node = SaveArmPose()
     try:
