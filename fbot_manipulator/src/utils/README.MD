@@ -72,10 +72,3 @@ ros2 service call /xarm/set_state \
 ros2 service call /xarm/set_mode \
     xarm_msgs/srv/SetInt16ById "{data: 0}"
 ```
-
-## Contributing
-
-1. Create a feature branch (`git checkout -b feat/amazing-feature`)
-2. Commit your changes (`git commit -m 'Add amazing feature'`)
-3. Push to the branch (`git push origin feat/amazing-feature`)
-4. Open a Pull Request
