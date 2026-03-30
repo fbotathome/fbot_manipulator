@@ -99,7 +99,7 @@ class SaveArmPose(Node):
             self.savePose()
             self.done_saving = True
             self.get_logger().info("Pose saving complete. Shutting down...")
-            rclpy.shutdown()
+            raise SystemExit
 
     def savePose(self) -> None:
         """@brief Interactively capture named poses from /joint_states and persist them."""
