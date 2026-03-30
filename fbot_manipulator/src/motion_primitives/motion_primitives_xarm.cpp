@@ -20,7 +20,7 @@ bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
 {    
     bool success = move_group_->setNamedTarget(target_name);
     if (!success) {
-        RCLCPP_ERROR(node_->get_logger(), "Failed to set named target: %s", target_name.c_str());
+        RCLCPP_ERROR(node_->get_logger(), "Named target '%s' not found in SRDF", target_name.c_str());
         return false;
     }
 
@@ -39,7 +39,6 @@ bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
 
     RCLCPP_INFO(node_->get_logger(), "Successfully moved to named target: %s", target_name.c_str());
     return true;
-
 }
 
 bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_positions)
