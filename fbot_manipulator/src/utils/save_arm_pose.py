@@ -38,11 +38,12 @@ class SaveArmPose(Node):
         self.group_name = "${prefix}xarm6"
         self.default_arm_joint_order = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
         self.arm_joint_order = self.loadArmJointOrder()
-        self.arm = XArmAPI("192.168.1.208")
+        
 
 
     def set_arm_mode(self, mode):
         """@brief Set the physical xArm control mode and ready state."""
+        self.arm = XArmAPI("192.168.1.208")
         self.arm.set_mode(mode)  # Set to position control mode
         self.arm.set_state(0)  # Set to ready state
         
