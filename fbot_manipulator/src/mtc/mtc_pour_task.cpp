@@ -100,7 +100,12 @@ bool MtcPourTask::buildTask()
 
             // Pour by rotating the wrist around the tool axis.
             {
-                auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", cartesian_planner_);
+                auto slow_pour_planner = std::make_shared<mtc::solvers::CartesianPath>();
+                slow_pour_planner->setMaxVelocityScalingFactor(0.08);
+                slow_pour_planner->setMaxAccelerationScalingFactor(0.05);
+                slow_pour_planner->setStepSize(0.001);
+
+                auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", slow_pour_planner);
                 stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
                 stage->setMinMaxDistance(pour_angle_delta, pour_angle_delta);
                 stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
@@ -184,7 +189,12 @@ bool MtcPourTask::buildTask()
 
         // Pour by rotating the wrist around the tool axis.
         {
-            auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", cartesian_planner_);
+            auto slow_pour_planner = std::make_shared<mtc::solvers::CartesianPath>();
+            slow_pour_planner->setMaxVelocityScalingFactor(0.50);
+            slow_pour_planner->setMaxAccelerationScalingFactor(0.40);
+            slow_pour_planner->setStepSize(0.1);
+
+            auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", slow_pour_planner);
             stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
             stage->setMinMaxDistance(pour_angle_delta, pour_angle_delta);
             stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
