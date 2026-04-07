@@ -37,6 +37,7 @@ struct MtcConfig
     double retreat_max = 0.15;
     int max_solutions = 5;
     double grasp_angle_delta = M_PI / 4;
+    double pour_angle_delta = M_PI / 3;
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
 };
 

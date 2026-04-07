@@ -57,6 +57,7 @@ add_executable(manipulation_task_server
   src/mtc/mtc_pick_task.cpp
   src/mtc/mtc_place_task.cpp
   src/mtc/mtc_pick_and_place_task.cpp
+  src/mtc/mtc_pour_task.cpp
 )
 
 ament_target_dependencies(manipulation_task_server
