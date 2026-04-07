@@ -10,16 +10,19 @@ class MtcPourTask : public MtcTask
 public:
   MtcPourTask(rclcpp::Node::SharedPtr node,
               const std::string& object_id,
+              const geometry_msgs::msg::Pose& object_pose,
               const geometry_msgs::msg::Pose& place_pose);
 
   MtcPourTask(rclcpp::Node::SharedPtr node,
               const std::string& object_id,
+              const geometry_msgs::msg::Pose& object_pose,
               const std::string& place_pose_name);
 
   bool buildTask() override;
 
 private:
   std::string object_id_;
+  geometry_msgs::msg::Pose object_pose_;
   geometry_msgs::msg::Pose place_pose_;
   std::string place_pose_name_;
 };

@@ -5,18 +5,22 @@ namespace fbot_manipulator
 
 MtcPourTask::MtcPourTask(rclcpp::Node::SharedPtr node,
                            const std::string& object_id,
+                   const geometry_msgs::msg::Pose& object_pose,
                            const geometry_msgs::msg::Pose& place_pose)
         : MtcTask("pour", node),
       object_id_(object_id),
+    object_pose_(object_pose),
       place_pose_(place_pose)
 {
 }
 
 MtcPourTask::MtcPourTask(rclcpp::Node::SharedPtr node,
                            const std::string& object_id,
+                   const geometry_msgs::msg::Pose& object_pose,
                            const std::string& place_pose_name)
         : MtcTask("pour", node),
       object_id_(object_id),
+    object_pose_(object_pose),
       place_pose_name_(place_pose_name)
 {
 }
@@ -24,6 +28,8 @@ MtcPourTask::MtcPourTask(rclcpp::Node::SharedPtr node,
 bool MtcPourTask::buildTask()
 {
     const double pour_angle_delta = config_.pour_angle_delta;
+    const double pre_pour_side_offset = 0.10;
+    const double pre_pour_above_offset = 0.15;
 
     task_.stages()->setName("pour_" + object_id_);
     task_.loadRobotModel(node_);
@@ -40,20 +46,54 @@ bool MtcPourTask::buildTask()
         task_.add(std::move(stage));
     }
 
+    // Move to a pre-pour pose above and slightly to the side of object_pose.
+    {
+        auto stage = std::make_unique<mtc::stages::Connect>(
+            "move to pre-pour approach",
+            mtc::stages::Connect::GroupPlannerVector{
+                { config_.arm_group_name, pipeline_planner_ }
+            });
+        stage->setTimeout(5.0);
+        stage->properties().configureInitFrom(mtc::Stage::PARENT);
+        task_.add(std::move(stage));
+    }
+
+    {
+        auto container = std::make_unique<mtc::SerialContainer>("approach object pose");
+        task_.properties().exposeTo(container->properties(), { "eef", "group", "ik_frame" });
+        container->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group", "ik_frame" });
+
+        auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate pre-pour pose");
+        stage->properties().configureInitFrom(mtc::Stage::PARENT);
+        stage->properties().set("marker_ns", "pre_pour_pose");
+        stage->setObject(object_id_);
+
+        geometry_msgs::msg::PoseStamped pre_pour_target;
+        pre_pour_target.header.frame_id = config_.world_frame;
+        pre_pour_target.pose = object_pose_;
+        pre_pour_target.pose.position.y -= pre_pour_side_offset;
+        pre_pour_target.pose.position.z += pre_pour_above_offset;
+        pre_pour_target.pose.orientation.x = 0.0;
+        pre_pour_target.pose.orientation.y = 0.0;
+        pre_pour_target.pose.orientation.z = 0.0;
+        pre_pour_target.pose.orientation.w = 1.0;
+        stage->setPose(pre_pour_target);
+        stage->setMonitoredStage(attach_object_stage);
+
+        auto wrapper = std::make_unique<mtc::stages::ComputeIK>("pre-pour pose IK", std::move(stage));
+        wrapper->setMaxIKSolutions(4);
+        wrapper->setMinSolutionDistance(0.5);
+        wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
+        wrapper->setTimeout(5.0);
+        wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
+        wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
+        container->insert(std::move(wrapper));
+
+        task_.add(std::move(container));
+    }
+
     if (place_pose_name_.empty())
     {
-        // ---- Move to Place (Connect) ----
-        {
-            auto stage = std::make_unique<mtc::stages::Connect>(
-                "move to place",
-                mtc::stages::Connect::GroupPlannerVector{
-                    { config_.arm_group_name, pipeline_planner_ }
-                });
-            stage->setTimeout(5.0);
-            stage->properties().configureInitFrom(mtc::Stage::PARENT);
-            task_.add(std::move(stage));
-        }
-
         // ---- Pour and Place Object Container ----
         {
             auto container = std::make_unique<mtc::SerialContainer>("pour and place object");
