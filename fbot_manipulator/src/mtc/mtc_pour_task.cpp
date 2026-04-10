@@ -219,20 +219,15 @@ bool MtcPourTask::buildTask()
     }
     else
     {
-        // ---- Move to named SRDF table pose ----
-        {
-            auto stage = std::make_unique<mtc::stages::MoveTo>("move to place pose", pipeline_planner_);
-            stage->setGroup(config_.arm_group_name);
-            stage->setGoal(place_pose_name_);
-            task_.add(std::move(stage));
-        }
+        // When using a named pose, the arm is already positioned there from the pick task
+        // Skip the MoveTo stage and go directly to pouring
 
         // Pour by rotating the wrist around the tool axis.
         {
             auto slow_pour_planner = std::make_shared<mtc::solvers::CartesianPath>();
-            slow_pour_planner->setMaxVelocityScalingFactor(0.50);
-            slow_pour_planner->setMaxAccelerationScalingFactor(0.40);
-            slow_pour_planner->setStepSize(0.1);
+            slow_pour_planner->setMaxVelocityScalingFactor(0.08);
+            slow_pour_planner->setMaxAccelerationScalingFactor(0.05);
+            slow_pour_planner->setStepSize(0.001);
 
             auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", slow_pour_planner);
             stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
