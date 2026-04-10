@@ -30,6 +30,10 @@ bool MtcPourTask::buildTask()
     const double pour_angle_delta = config_.pour_angle_delta;
     const double pre_pour_side_offset = 0.10;
     const double pre_pour_above_offset = 0.15;
+    const double object_side_sign = (object_pose_.position.y >= 0.0) ? 1.0 : -1.0;
+    // Rotate toward the side where the target object sits in the world Y axis.
+    const double pour_direction_sign = -object_side_sign;
+    const double pre_pour_side_sign = -object_side_sign;
 
     task_.stages()->setName("pour_" + object_id_);
     task_.loadRobotModel(node_);
@@ -71,7 +75,7 @@ bool MtcPourTask::buildTask()
         geometry_msgs::msg::PoseStamped pre_pour_target;
         pre_pour_target.header.frame_id = config_.world_frame;
         pre_pour_target.pose = object_pose_;
-        pre_pour_target.pose.position.y -= pre_pour_side_offset;
+        pre_pour_target.pose.position.y += pre_pour_side_sign * pre_pour_side_offset;
         pre_pour_target.pose.position.z += pre_pour_above_offset;
         pre_pour_target.pose.orientation.x = 0.0;
         pre_pour_target.pose.orientation.y = 0.0;
@@ -153,8 +157,16 @@ bool MtcPourTask::buildTask()
 
                 geometry_msgs::msg::TwistStamped twist;
                 twist.header.frame_id = config_.hand_frame;
-                twist.twist.angular.z = 5.0;
+                twist.twist.angular.z = pour_direction_sign;
                 stage->setDirection(twist);
+                container->insert(std::move(stage));
+            }
+
+
+            //Wait for pour to complete
+            {
+                auto stage = std::make_unique<mtc::stages::Wait>("wait for pour");
+                stage->setDuration(config_.pour_wait_time);
                 container->insert(std::move(stage));
             }
 
@@ -168,7 +180,7 @@ bool MtcPourTask::buildTask()
 
                 geometry_msgs::msg::TwistStamped twist;
                 twist.header.frame_id = config_.hand_frame;
-                twist.twist.angular.z = -1.0;
+                twist.twist.angular.z = -pour_direction_sign;
                 stage->setDirection(twist);
                 container->insert(std::move(stage));
             }
@@ -178,17 +190,6 @@ bool MtcPourTask::buildTask()
                 auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
                 stage->setGroup(config_.hand_group_name);
                 stage->setGoal("open");
-                container->insert(std::move(stage));
-            }
-
-            // Forbid hand-object collision
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_,
-                                       task_.getRobotModel()
-                                           ->getJointModelGroup(config_.hand_group_name)
-                                           ->getLinkModelNamesWithCollisionGeometry(),
-                                       false);
                 container->insert(std::move(stage));
             }
 
@@ -237,7 +238,7 @@ bool MtcPourTask::buildTask()
 
             geometry_msgs::msg::TwistStamped twist;
             twist.header.frame_id = config_.hand_frame;
-            twist.twist.angular.z = 5.0;
+            twist.twist.angular.z = pour_direction_sign;
             stage->setDirection(twist);
             task_.add(std::move(stage));
         }
@@ -252,7 +253,7 @@ bool MtcPourTask::buildTask()
 
             geometry_msgs::msg::TwistStamped twist;
             twist.header.frame_id = config_.hand_frame;
-            twist.twist.angular.z = -1.0;
+            twist.twist.angular.z = -pour_direction_sign;
             stage->setDirection(twist);
             task_.add(std::move(stage));
         }
@@ -265,25 +266,6 @@ bool MtcPourTask::buildTask()
             task_.add(std::move(stage));
         }
 
-        // Forbid hand-object collision
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-            stage->allowCollisions(object_id_,
-                                   task_.getRobotModel()
-                                       ->getJointModelGroup(config_.hand_group_name)
-                                       ->getLinkModelNamesWithCollisionGeometry(),
-                                   false);
-            task_.add(std::move(stage));
-        }
-
-        // Detach object
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
-            stage->detachObject(object_id_, config_.hand_frame);
-            task_.add(std::move(stage));
-        }
-
-        // Remove collision object
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("remove object");
             stage->removeObject(object_id_);

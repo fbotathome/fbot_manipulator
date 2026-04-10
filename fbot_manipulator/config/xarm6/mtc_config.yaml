@@ -15,4 +15,5 @@ manipulation_task_server:
       max_solutions: 2
       grasp_angle_delta: 0.262
       pour_angle_delta: 1.048 # Needs to test it and it's in radians
+      pour_wait_time: 2.0
       grasp_offset: -0.01
