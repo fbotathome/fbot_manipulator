@@ -1,9 +1,5 @@
 #include "fbot_manipulator/motion_primitives_xarm.hpp"
 
-#include <chrono>
-#include <exception>
-
-using namespace std::chrono_literals;
 
 namespace fbot_manipulator
 {
@@ -21,39 +17,27 @@ MotionPrimitivesXArm::MotionPrimitivesXArm(const std::string& arm_name)
 }
 
 bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
-{
-    auto poses = manipulator_config_["poses"];
-    if (!poses[target_name]) {
-        RCLCPP_ERROR(node_->get_logger(),
-                     "[MotionPrimitives] Named target '%s' not found in current manipulator config.",
-                     target_name.c_str());
+{    
+    bool success = move_group_->setNamedTarget(target_name);
+    if (!success) {
+        RCLCPP_ERROR(node_->get_logger(), "Named target '%s' not found in SRDF", target_name.c_str());
         return false;
     }
 
-    auto target_joint_positions = poses[target_name].as<std::vector<double>>();
-
-    auto plan_success = planJointTarget(target_joint_positions);
-
-    if (plan_success == false) {
-        RCLCPP_ERROR(node_->get_logger(),
-            "[MotionPrimitives] plan_joint service failed");
+    success = (move_group_->plan(plan_) == moveit::core::MoveItErrorCode::SUCCESS);
+    if (!success) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to plan to named target: %s", target_name.c_str());
         return false;
     }
 
-    RCLCPP_INFO(node_->get_logger(),
-                "[MotionPrimitives] plan_joint succeeded");
-
-    auto exec_success = executePath();
-
-    if (exec_success == false) {
-        RCLCPP_ERROR(node_->get_logger(),
-            "[MotionPrimitives] Execution service failed");
+    is_trajectory_ = false;
+    success = executePath();
+    if (!success) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to execute path to named target: %s", target_name.c_str());
         return false;
     }
 
-    RCLCPP_INFO(node_->get_logger(),
-                "[MotionPrimitives] plan_exec service succeeded");
-
+    RCLCPP_INFO(node_->get_logger(), "Successfully moved to named target: %s", target_name.c_str());
     return true;
 }
 
@@ -67,8 +51,7 @@ bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_po
         return false;
     }
 
-    RCLCPP_INFO(node_->get_logger(),
-                "[MotionPrimitives] plan_joint succeeded");
+    RCLCPP_INFO(node_->get_logger(), "Plan to named target '%s' succeeded, executing...", target_name.c_str());
 
     auto exec_success = executePath();
 
