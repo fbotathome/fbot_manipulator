@@ -1,7 +1,49 @@
 #include "fbot_manipulator/mtc/mtc_pour_task.hpp"
 
+#include <algorithm>
+#include <moveit/planning_scene/planning_scene.h>
+#include <moveit/robot_trajectory/robot_trajectory.h>
+
 namespace fbot_manipulator
 {
+
+namespace
+{
+
+class TimedPauseStage : public mtc::PropagatingEitherWay
+{
+
+public:
+    TimedPauseStage(const std::string& name, double duration, const std::string& group)
+        : mtc::PropagatingEitherWay(name), group_(group)
+    {
+        setProperty("duration", duration);
+    }
+
+protected:
+    bool compute(const mtc::InterfaceState& state,
+                 planning_scene::PlanningScenePtr& scene,
+                 mtc::SubTrajectory& trajectory,
+                 mtc::Interface::Direction /*dir*/) override
+    {
+        const double duration = std::max(0.0, properties().get<double>("duration"));
+        scene = state.scene()->diff();
+
+        auto wait_trajectory = std::make_shared<robot_trajectory::RobotTrajectory>(scene->getRobotModel(), group_);
+        const auto& current_state = scene->getCurrentState();
+        wait_trajectory->addSuffixWayPoint(current_state, 0.0);
+        wait_trajectory->addSuffixWayPoint(current_state, duration);
+
+        trajectory.setTrajectory(wait_trajectory);
+        trajectory.setComment("wait");
+        return true;
+    }
+
+private:
+    std::string group_;
+};
+
+} // namespace
 
 MtcPourTask::MtcPourTask(rclcpp::Node::SharedPtr node,
                            const std::string& object_id,
@@ -150,25 +192,26 @@ bool MtcPourTask::buildTask()
                 slow_pour_planner->setStepSize(0.001);
 
                 auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", slow_pour_planner);
+                auto wait_stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
                 stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
                 stage->setMinMaxDistance(pour_angle_delta, pour_angle_delta);
                 stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
                 stage->properties().set("marker_ns", "pour_wrist");
+                
 
                 geometry_msgs::msg::TwistStamped twist;
                 twist.header.frame_id = config_.hand_frame;
                 twist.twist.angular.z = pour_direction_sign;
                 stage->setDirection(twist);
                 container->insert(std::move(stage));
+                container->insert(std::move(wait_stage));
             }
-
-
-            //Wait for pour to complete
-            {
-                auto stage = std::make_unique<mtc::stages::Wait>("wait for pour");
-                stage->setDuration(config_.pour_wait_time);
-                container->insert(std::move(stage));
-            }
+ 
+                // Wait for pour to complete.
+                {
+                    auto stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
+                    container->insert(std::move(stage));
+                }
 
             // Rotate back to a neutral wrist orientation before release.
             {
@@ -240,6 +283,12 @@ bool MtcPourTask::buildTask()
             twist.header.frame_id = config_.hand_frame;
             twist.twist.angular.z = pour_direction_sign;
             stage->setDirection(twist);
+            task_.add(std::move(stage));
+        }
+
+        // Wait for pour to complete.
+        {
+            auto stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
             task_.add(std::move(stage));
         }
 
