@@ -83,12 +83,23 @@ bool MtcPourTask::buildTask()
     task_.setProperty("group", config_.arm_group_name);
     task_.setProperty("eef", config_.hand_group_name);
     task_.setProperty("ik_frame", config_.hand_frame);
+    const auto hand_links = task_.getRobotModel()
+                                ->getJointModelGroup(config_.hand_group_name)
+                                ->getLinkModelNamesWithCollisionGeometry();
 
     // ---- Current State (object assumed already attached) ----
     mtc::Stage* attach_object_stage = nullptr;
     {
         auto stage = std::make_unique<mtc::stages::CurrentState>("current state");
         attach_object_stage = stage.get();
+        task_.add(std::move(stage));
+    }
+
+    // The object is expected to be attached already for POUR.
+    // Allow hand-object collision before pre-pour IK/motion planning.
+    {
+        auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision (hand,object)");
+        stage->allowCollisions(object_id_, hand_links, true);
         task_.add(std::move(stage));
     }
 
@@ -131,6 +142,7 @@ bool MtcPourTask::buildTask()
         wrapper->setMinSolutionDistance(0.5);
         wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
         wrapper->setTimeout(5.0);
+        wrapper->setIgnoreCollisions(true);
         wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
         wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
         container->insert(std::move(wrapper));
@@ -192,26 +204,23 @@ bool MtcPourTask::buildTask()
                 slow_pour_planner->setStepSize(0.001);
 
                 auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", slow_pour_planner);
-                auto wait_stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
                 stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
                 stage->setMinMaxDistance(pour_angle_delta, pour_angle_delta);
                 stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
                 stage->properties().set("marker_ns", "pour_wrist");
-                
 
                 geometry_msgs::msg::TwistStamped twist;
                 twist.header.frame_id = config_.hand_frame;
                 twist.twist.angular.z = pour_direction_sign;
                 stage->setDirection(twist);
                 container->insert(std::move(stage));
-                container->insert(std::move(wait_stage));
             }
- 
-                // Wait for pour to complete.
-                {
-                    auto stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
-                    container->insert(std::move(stage));
-                }
+
+            // Wait for pour to complete.
+            {
+                auto stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
+                container->insert(std::move(stage));
+            }
 
             // Rotate back to a neutral wrist orientation before release.
             {
@@ -233,6 +242,13 @@ bool MtcPourTask::buildTask()
                 auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
                 stage->setGroup(config_.hand_group_name);
                 stage->setGoal("open");
+                container->insert(std::move(stage));
+            }
+
+            // Restore collision checking before releasing object from hand.
+            {
+                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
+                stage->allowCollisions(object_id_, hand_links, false);
                 container->insert(std::move(stage));
             }
 
@@ -312,6 +328,18 @@ bool MtcPourTask::buildTask()
             auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
             stage->setGroup(config_.hand_group_name);
             stage->setGoal("open");
+            task_.add(std::move(stage));
+        }
+
+        {
+            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
+            stage->allowCollisions(object_id_, hand_links, false);
+            task_.add(std::move(stage));
+        }
+
+        {
+            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
+            stage->detachObject(object_id_, config_.hand_frame);
             task_.add(std::move(stage));
         }
 
