@@ -86,6 +86,9 @@ bool MtcPourTask::buildTask()
     const auto hand_links = task_.getRobotModel()
                                 ->getJointModelGroup(config_.hand_group_name)
                                 ->getLinkModelNamesWithCollisionGeometry();
+    const auto arm_links = task_.getRobotModel()
+                               ->getJointModelGroup(config_.arm_group_name)
+                               ->getLinkModelNamesWithCollisionGeometry();
 
     // ---- Current State (object assumed already attached) ----
     mtc::Stage* attach_object_stage = nullptr;
@@ -96,10 +99,15 @@ bool MtcPourTask::buildTask()
     }
 
     // The object is expected to be attached already for POUR.
-    // Allow hand-object collision before pre-pour IK/motion planning.
+    // Allow collisions with end-effector and arm links during pouring.
     {
         auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision (hand,object)");
         stage->allowCollisions(object_id_, hand_links, true);
+        task_.add(std::move(stage));
+    }
+    {
+        auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision (arm,object)");
+        stage->allowCollisions(object_id_, arm_links, true);
         task_.add(std::move(stage));
     }
 
@@ -150,137 +158,11 @@ bool MtcPourTask::buildTask()
         task_.add(std::move(container));
     }
 
-    if (place_pose_name_.empty())
+    // ---- Pour Object Container ----
     {
-        // ---- Pour and Place Object Container ----
-        {
-            auto container = std::make_unique<mtc::SerialContainer>("pour and place object");
-            task_.properties().exposeTo(container->properties(), { "eef", "group", "ik_frame" });
-            container->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group", "ik_frame" });
-
-            // Lower near the table before placing.
-            {
-                auto stage = std::make_unique<mtc::stages::MoveRelative>("lower object", cartesian_planner_);
-                stage->properties().set("marker_ns", "lower");
-                stage->properties().set("link", config_.hand_frame);
-                stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-                stage->setMinMaxDistance(config_.lift_min, config_.lift_max);
-
-                geometry_msgs::msg::Vector3Stamped vec;
-                vec.header.frame_id = config_.world_frame;
-                vec.vector.z = -1.0;
-                stage->setDirection(vec);
-                container->insert(std::move(stage));
-            }
-
-            // Generate Place Pose + IK
-            {
-                auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate place pose");
-                stage->properties().configureInitFrom(mtc::Stage::PARENT);
-                stage->properties().set("marker_ns", "place_pose");
-                stage->setObject(object_id_);
-
-                geometry_msgs::msg::PoseStamped target;
-                target.header.frame_id = config_.world_frame;
-                target.pose = place_pose_;
-                stage->setPose(target);
-                stage->setMonitoredStage(attach_object_stage);
-
-                auto wrapper = std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(stage));
-                wrapper->setMaxIKSolutions(4);
-                wrapper->setMinSolutionDistance(0.5);
-                wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-                wrapper->setTimeout(5.0);
-                wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
-                wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
-                container->insert(std::move(wrapper));
-            }
-
-            // Pour by rotating the wrist around the tool axis.
-            {
-                auto slow_pour_planner = std::make_shared<mtc::solvers::CartesianPath>();
-                slow_pour_planner->setMaxVelocityScalingFactor(0.08);
-                slow_pour_planner->setMaxAccelerationScalingFactor(0.05);
-                slow_pour_planner->setStepSize(0.001);
-
-                auto stage = std::make_unique<mtc::stages::MoveRelative>("pour wrist", slow_pour_planner);
-                stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-                stage->setMinMaxDistance(pour_angle_delta, pour_angle_delta);
-                stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-                stage->properties().set("marker_ns", "pour_wrist");
-
-                geometry_msgs::msg::TwistStamped twist;
-                twist.header.frame_id = config_.hand_frame;
-                twist.twist.angular.z = pour_direction_sign;
-                stage->setDirection(twist);
-                container->insert(std::move(stage));
-            }
-
-            // Wait for pour to complete.
-            {
-                auto stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
-                container->insert(std::move(stage));
-            }
-
-            // Rotate back to a neutral wrist orientation before release.
-            {
-                auto stage = std::make_unique<mtc::stages::MoveRelative>("recover wrist", cartesian_planner_);
-                stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-                stage->setMinMaxDistance(pour_angle_delta, pour_angle_delta);
-                stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-                stage->properties().set("marker_ns", "recover_wrist");
-
-                geometry_msgs::msg::TwistStamped twist;
-                twist.header.frame_id = config_.hand_frame;
-                twist.twist.angular.z = -pour_direction_sign;
-                stage->setDirection(twist);
-                container->insert(std::move(stage));
-            }
-
-            // Open gripper
-            {
-                auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
-                stage->setGroup(config_.hand_group_name);
-                stage->setGoal("open");
-                container->insert(std::move(stage));
-            }
-
-            // Restore collision checking before releasing object from hand.
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_, hand_links, false);
-                container->insert(std::move(stage));
-            }
-
-            // Detach object
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
-                stage->detachObject(object_id_, config_.hand_frame);
-                container->insert(std::move(stage));
-            }
-
-            // Retreat
-            {
-                auto stage = std::make_unique<mtc::stages::MoveRelative>("retreat", cartesian_planner_);
-                stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-                stage->setMinMaxDistance(config_.retreat_min, config_.retreat_max);
-                stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-                stage->properties().set("marker_ns", "retreat");
-
-                geometry_msgs::msg::Vector3Stamped vec;
-                vec.header.frame_id = config_.world_frame;
-                vec.vector.z = 1.0;
-                stage->setDirection(vec);
-                container->insert(std::move(stage));
-            }
-
-            task_.add(std::move(container));
-        }
-    }
-    else
-    {
-        // When using a named pose, the arm is already positioned there from the pick task
-        // Skip the MoveTo stage and go directly to pouring
+        auto container = std::make_unique<mtc::SerialContainer>("pour object");
+        task_.properties().exposeTo(container->properties(), { "eef", "group", "ik_frame" });
+        container->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group", "ik_frame" });
 
         // Pour by rotating the wrist around the tool axis.
         {
@@ -299,16 +181,16 @@ bool MtcPourTask::buildTask()
             twist.header.frame_id = config_.hand_frame;
             twist.twist.angular.z = pour_direction_sign;
             stage->setDirection(twist);
-            task_.add(std::move(stage));
+            container->insert(std::move(stage));
         }
 
         // Wait for pour to complete.
         {
             auto stage = std::make_unique<TimedPauseStage>("wait for pour", config_.pour_wait_time, config_.arm_group_name);
-            task_.add(std::move(stage));
+            container->insert(std::move(stage));
         }
 
-        // Rotate back before placing object on table.
+        // Rotate back after pouring.
         {
             auto stage = std::make_unique<mtc::stages::MoveRelative>("recover wrist", cartesian_planner_);
             stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
@@ -320,42 +202,10 @@ bool MtcPourTask::buildTask()
             twist.header.frame_id = config_.hand_frame;
             twist.twist.angular.z = -pour_direction_sign;
             stage->setDirection(twist);
-            task_.add(std::move(stage));
+            container->insert(std::move(stage));
         }
 
-        // Open gripper
-        {
-            auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
-            stage->setGroup(config_.hand_group_name);
-            stage->setGoal("open");
-            task_.add(std::move(stage));
-        }
-
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-            stage->allowCollisions(object_id_, hand_links, false);
-            task_.add(std::move(stage));
-        }
-
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
-            stage->detachObject(object_id_, config_.hand_frame);
-            task_.add(std::move(stage));
-        }
-
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("remove object");
-            stage->removeObject(object_id_);
-            task_.add(std::move(stage));
-        }
-    }
-
-    // ---- Return Home ----
-    {
-        auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
-        stage->setGroup(config_.arm_group_name);
-        stage->setGoal("home");
-        task_.add(std::move(stage));
+        task_.add(std::move(container));
     }
 
     return true;
