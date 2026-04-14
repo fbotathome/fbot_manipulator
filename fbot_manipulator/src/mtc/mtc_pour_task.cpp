@@ -46,24 +46,11 @@ private:
 } // namespace
 
 MtcPourTask::MtcPourTask(rclcpp::Node::SharedPtr node,
-                           const std::string& object_id,
-                   const geometry_msgs::msg::Pose& object_pose,
-                           const geometry_msgs::msg::Pose& place_pose)
+                         const std::string& object_id,
+                         const geometry_msgs::msg::Pose& object_pose)
         : MtcTask("pour", node),
       object_id_(object_id),
-    object_pose_(object_pose),
-      place_pose_(place_pose)
-{
-}
-
-MtcPourTask::MtcPourTask(rclcpp::Node::SharedPtr node,
-                           const std::string& object_id,
-                   const geometry_msgs::msg::Pose& object_pose,
-                           const std::string& place_pose_name)
-        : MtcTask("pour", node),
-      object_id_(object_id),
-    object_pose_(object_pose),
-      place_pose_name_(place_pose_name)
+      object_pose_(object_pose)
 {
 }
 

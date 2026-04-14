@@ -111,14 +111,7 @@ private:
             }
             break;
         case ManipulationTaskAction::Goal::POUR:
-            if (!goal->place_pose_name.empty())
-            {
-                mtc_task = std::make_shared<MtcPourTask>(shared_from_this(), object_id, goal->object_pose, goal->place_pose_name);
-            }
-            else
-            {
-                mtc_task = std::make_shared<MtcPourTask>(shared_from_this(), object_id, goal->object_pose, goal->place_pose);
-            }
+            mtc_task = std::make_shared<MtcPourTask>(shared_from_this(), object_id, goal->object_pose);
             break;
         default:
             result->success = false;
