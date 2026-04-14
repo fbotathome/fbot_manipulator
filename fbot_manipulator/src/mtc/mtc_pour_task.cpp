@@ -191,9 +191,14 @@ bool MtcPourTask::buildTask()
             stage->setDirection(twist);
             container->insert(std::move(stage));
         }
-
         task_.add(std::move(container));
     }
+        {
+        auto stage = std::make_unique<mtc::stages::MoveTo>("return hold-up", pipeline_planner_);
+        stage->setGroup(config_.arm_group_name);
+        stage->setGoal("hold-up");
+        task_.add(std::move(stage));
+        }
 
     return true;
 }
