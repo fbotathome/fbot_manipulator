@@ -57,8 +57,8 @@ MtcPourTask::MtcPourTask(rclcpp::Node::SharedPtr node,
 bool MtcPourTask::buildTask()
 {
     const double pour_angle_delta = config_.pour_angle_delta;
-    const double pre_pour_side_offset = 0.10;
-    const double pre_pour_above_offset = 0.15;
+    const double pre_pour_side_offset = config_.pour_side_offset;
+    const double pre_pour_above_offset = config_.pour_above_offset;
     const double object_side_sign = (object_pose_.position.y >= 0.0) ? 1.0 : -1.0;
     // Rotate toward the side where the target object sits in the world Y axis.
     const double pour_direction_sign = -object_side_sign;
@@ -193,12 +193,13 @@ bool MtcPourTask::buildTask()
         }
         task_.add(std::move(container));
     }
-        {
+
+    {
         auto stage = std::make_unique<mtc::stages::MoveTo>("return hold-up", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
         stage->setGoal("hold-up");
         task_.add(std::move(stage));
-        }
+    }
 
     return true;
 }

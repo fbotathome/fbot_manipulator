@@ -38,6 +38,8 @@ struct MtcConfig
     int max_solutions = 5;
     double grasp_angle_delta = M_PI / 4;
     double pour_angle_delta = M_PI / 2;
+    double pour_side_offset = 0.10;
+    double pour_above_offset = 0.15;
     double pour_wait_time = 5.0;
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
 };
