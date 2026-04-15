@@ -105,7 +105,7 @@ bool MtcPourTask::buildTask()
             mtc::stages::Connect::GroupPlannerVector{
                 { config_.arm_group_name, pipeline_planner_ }
             });
-        stage->setTimeout(5.0);
+        stage->setTimeout(1.5);
         stage->properties().configureInitFrom(mtc::Stage::PARENT);
         task_.add(std::move(stage));
     }
@@ -133,10 +133,10 @@ bool MtcPourTask::buildTask()
         stage->setMonitoredStage(attach_object_stage);
 
         auto wrapper = std::make_unique<mtc::stages::ComputeIK>("pre-pour pose IK", std::move(stage));
-        wrapper->setMaxIKSolutions(4);
-        wrapper->setMinSolutionDistance(0.5);
+        wrapper->setMaxIKSolutions(2);
+        wrapper->setMinSolutionDistance(0.1);
         wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-        wrapper->setTimeout(5.0);
+        wrapper->setTimeout(1.5);
         wrapper->setIgnoreCollisions(true);
         wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
         wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });

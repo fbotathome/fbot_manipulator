@@ -1,4 +1,5 @@
 #include "fbot_manipulator/mtc/mtc_task.hpp"
+#include <chrono>
 
 namespace fbot_manipulator
 {
@@ -54,14 +55,14 @@ void MtcTask::loadConfig()
 void MtcTask::setupSolvers()
 {
     pipeline_planner_ = std::make_shared<mtc::solvers::PipelinePlanner>(node_, "ompl");
-    //pipeline_planner_->setPlannerId("RRTConnectkConfigDefault");
-    pipeline_planner_->setMaxVelocityScalingFactor(0.3);
-    pipeline_planner_->setMaxAccelerationScalingFactor(0.1);
+    pipeline_planner_->setPlannerId("RRTConnectkConfigDefault");
+    pipeline_planner_->setMaxVelocityScalingFactor(0.7);
+    pipeline_planner_->setMaxAccelerationScalingFactor(0.5);
 
     cartesian_planner_ = std::make_shared<mtc::solvers::CartesianPath>();
-    cartesian_planner_->setMaxVelocityScalingFactor(0.5);
+    cartesian_planner_->setMaxVelocityScalingFactor(0.7);
     cartesian_planner_->setMaxAccelerationScalingFactor(0.5);
-    cartesian_planner_->setStepSize(0.002);
+    cartesian_planner_->setStepSize(0.01);
 
     joint_planner_ = std::make_shared<mtc::solvers::JointInterpolationPlanner>();
 }
@@ -111,15 +112,21 @@ bool MtcTask::plan()
         return false;
     }
 
-    if (!task_.plan(config_.max_solutions))
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    int solutions_to_find = std::min(config_.max_solutions, 2);
+    if (!task_.plan(solutions_to_find))
     {
         RCLCPP_ERROR(logger(), "[MtcTask:%s] Planning failed", task_name_.c_str());
         task_.printState();
         return false;
     }
 
-    RCLCPP_INFO(logger(), "[MtcTask:%s] Planning succeeded with %zu solutions",
-                task_name_.c_str(), task_.solutions().size());
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration_ms = std::chrono::duration<double, std::milli>(end - start).count();
+    
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Planning succeeded with %zu solutions (%.2f ms)",
+                task_name_.c_str(), task_.solutions().size(), duration_ms);
     return true;
 }
 

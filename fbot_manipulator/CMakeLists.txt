@@ -85,6 +85,22 @@ install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 # find_package(<dependency> REQUIRED)
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_mtc_pick_performance test/test_mtc_pick_performance.cpp
+    src/mtc/mtc_task.cpp
+    src/mtc/mtc_pick_task.cpp
+  )
+  ament_target_dependencies(test_mtc_pick_performance
+    rclcpp
+    moveit
+    moveit_ros_planning_interface
+    moveit_task_constructor_core
+    moveit_task_constructor_msgs
+    tf2_geometry_msgs
+    tf2_eigen
+    fbot_manipulator_msgs
+  )
+  
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
