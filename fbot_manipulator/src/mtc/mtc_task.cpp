@@ -112,21 +112,15 @@ bool MtcTask::plan()
         return false;
     }
 
-    auto start = std::chrono::high_resolution_clock::now();
-    
-    int solutions_to_find = std::min(config_.max_solutions, 2);
-    if (!task_.plan(solutions_to_find))
+    if (!task_.plan(config_.max_solutions))
     {
         RCLCPP_ERROR(logger(), "[MtcTask:%s] Planning failed", task_name_.c_str());
         task_.printState();
         return false;
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration_ms = std::chrono::duration<double, std::milli>(end - start).count();
-    
-    RCLCPP_INFO(logger(), "[MtcTask:%s] Planning succeeded with %zu solutions (%.2f ms)",
-                task_name_.c_str(), task_.solutions().size(), duration_ms);
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Planning succeeded with %zu solutions",
+                task_name_.c_str(), task_.solutions().size());
     return true;
 }
 
