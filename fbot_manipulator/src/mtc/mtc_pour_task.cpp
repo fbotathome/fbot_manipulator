@@ -125,10 +125,6 @@ bool MtcPourTask::buildTask()
         pre_pour_target.pose = object_pose_;
         pre_pour_target.pose.position.y += pre_pour_side_sign * pre_pour_side_offset;
         pre_pour_target.pose.position.z += pre_pour_above_offset;
-        pre_pour_target.pose.orientation.x = 0.0;
-        pre_pour_target.pose.orientation.y = 0.0;
-        pre_pour_target.pose.orientation.z = 0.0;
-        pre_pour_target.pose.orientation.w = 1.0;
         stage->setPose(pre_pour_target);
         stage->setMonitoredStage(attach_object_stage);
 
