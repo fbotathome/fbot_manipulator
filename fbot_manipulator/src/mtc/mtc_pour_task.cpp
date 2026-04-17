@@ -193,7 +193,7 @@ bool MtcPourTask::buildTask()
         }
         task_.add(std::move(container));
     }
-
+    // Go back to hold-up pose after pouring.
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("return hold-up", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
