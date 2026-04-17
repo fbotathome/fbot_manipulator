@@ -133,7 +133,7 @@ bool MtcPourTask::buildTask()
         stage->setMonitoredStage(attach_object_stage);
 
         auto wrapper = std::make_unique<mtc::stages::ComputeIK>("pre-pour pose IK", std::move(stage));
-        wrapper->setMaxIKSolutions(2);
+        wrapper->setMaxIKSolutions(4);
         wrapper->setMinSolutionDistance(0.1);
         wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
         wrapper->setTimeout(1.5);
