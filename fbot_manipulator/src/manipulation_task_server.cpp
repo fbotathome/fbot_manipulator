@@ -10,6 +10,7 @@
 #include "fbot_manipulator/mtc/mtc_pick_task.hpp"
 #include "fbot_manipulator/mtc/mtc_place_task.hpp"
 #include "fbot_manipulator/mtc/mtc_pick_and_place_task.hpp"
+#include "fbot_manipulator/mtc/mtc_pour_task.hpp"
 
 namespace fbot_manipulator
 {
@@ -108,6 +109,9 @@ private:
             {
                 mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), object_id, goal->place_pose);
             }
+            break;
+        case ManipulationTaskAction::Goal::POUR:
+            mtc_task = std::make_shared<MtcPourTask>(shared_from_this(), object_id, goal->object_pose);
             break;
         default:
             result->success = false;

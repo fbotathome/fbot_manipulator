@@ -14,12 +14,12 @@ ROS 2 packages for robot arm manipulation, providing both low-level motion primi
 ```
 fbot_manipulator
 ├── manipulator_interface_node      (services: gripper, joint, pose, named targets)
-└── manipulation_task_server        (action: pick, place, pick-and-place via MTC)
+└── manipulation_task_server        (action: pick, place, pick-and-place, pour via MTC)
 ```
 
 **Motion Primitives** wrap MoveIt 2's MoveGroupInterface for direct arm/gripper control, exposed as ROS 2 services. Robot-specific implementations inherit from `MotionPrimitivesBase`.
 
-**MTC Tasks** use MoveIt Task Constructor to build multi-stage manipulation pipelines (approach, grasp, lift, move, place, retreat). These are exposed through a single ROS 2 action server that accepts a bounding box from the vision system and executes the requested task.
+**MTC Tasks** use MoveIt Task Constructor to build multi-stage manipulation pipelines (approach, grasp, lift, move, place, retreat, pour). These are exposed through a single ROS 2 action server that accepts a bounding box from the vision system and executes the requested task.
 
 ## Interfaces
 
@@ -36,13 +36,13 @@ fbot_manipulator
 
 | Action | Type | Description |
 |--------|------|-------------|
-| `fbot_manipulator/manipulation_task` | `ManipulationTask` | Execute a pick, place, or pick-and-place task |
+| `fbot_manipulator/manipulation_task` | `ManipulationTask` | Execute a pick, place, pick-and-place, or pour task |
 
 **ManipulationTask goal fields:**
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `task_type` | `uint8` | `PICK=0`, `PLACE=1`, `PICK_AND_PLACE=2` |
+| `task_type` | `uint8` | `PICK=0`, `PLACE=1`, `PICK_AND_PLACE=2`, `POUR=3` |
 | `object_id` | `string` | Identifier for the object |
 | `object_pose` | `geometry_msgs/Pose` | Bounding box center position |
 | `object_size` | `geometry_msgs/Vector3` | Bounding box dimensions (x, y, z) |
@@ -64,7 +64,8 @@ fbot_manipulator/
 │       ├── mtc_task.hpp                # MTC base task (solvers, collision objects, plan/execute)
 │       ├── mtc_pick_task.hpp           # Pick pipeline
 │       ├── mtc_place_task.hpp          # Place pipeline
-│       └── mtc_pick_and_place_task.hpp # Combined pick-and-place pipeline
+│       ├── mtc_pick_and_place_task.hpp # Combined pick-and-place pipeline
+│       └── mtc_pour_task.hpp           # Pour pipeline
 ├── src/
 │   ├── manipulator_interface_node.cpp  # Service server node
 │   ├── manipulation_task_server.cpp    # Action server node
@@ -76,7 +77,8 @@ fbot_manipulator/
 │       ├── mtc_task.cpp
 │       ├── mtc_pick_task.cpp
 │       ├── mtc_place_task.cpp
-│       └── mtc_pick_and_place_task.cpp
+│       ├── mtc_pick_and_place_task.cpp
+│       └── mtc_pour_task.cpp
 ├── config/
 │   └── xarm6/
 │       ├── manipulator_config.yaml  # Motion primitives config
@@ -117,6 +119,16 @@ CurrentState → Connect(move to place) →
 ### Pick and Place
 
 Combines both pipelines into a single MTC task with shared stage references.
+
+### Pour
+
+```
+CurrentState → AllowCollision(hand,object) → AllowCollision(arm,object) →
+  Connect(move to pre-pour) →
+  [ GeneratePlacePose + IK ] →
+  [ MoveRelative(pour wrist) → Wait → MoveRelative(recover wrist) ] →
+  ReturnHome(hold-up)
+```
 
 ## Configuration
 
@@ -159,6 +171,10 @@ manipulation_task_server:
       retreat_max: 0.15
       max_solutions: 5
       grasp_angle_delta: 0.785 # radians (pi/4 = 8 grasp angles)
+      pour_side_offset: 0.05   # meters - side offset for pre-pour pose
+      pour_above_offset: 0.05  # meters - height offset for pre-pour pose
+      pour_angle_delta: 0.785  # radians - pour rotation angle
+      pour_wait_time: 2.0      # seconds - wait time during pouring
 ```
 
 ## Usage
@@ -188,6 +204,17 @@ ros2 action send_goal /fbot_manipulator/manipulation_task \
     object_pose: {position: {x: 0.5, y: 0.0, z: 0.1}, orientation: {w: 1.0}}, \
     object_size: {x: 0.06, y: 0.06, z: 0.12}, \
     place_pose: {position: {x: 0.35, y: 0.2, z: 0.06}, orientation: {w: 1.0}}}" \
+  --feedback
+```
+
+### Send a pour goal
+
+```bash
+ros2 action send_goal /fbot_manipulator/manipulation_task \
+  fbot_manipulator_msgs/action/ManipulationTask \
+  "{task_type: 3, object_id: 'pitcher', \
+    object_pose: {position: {x: 0.5, y: 0.0, z: 0.2}, orientation: {w: 1.0}}, \
+    object_size: {x: 0.1, y: 0.08, z: 0.25}}" \
   --feedback
 ```
 

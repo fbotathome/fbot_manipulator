@@ -14,4 +14,9 @@ manipulation_task_server:
       retreat_max: 0.25
       max_solutions: 2
       grasp_angle_delta: 0.262
+      pour_angle_delta: 1.72 #98.54 Degrees
+      pour_side_offset: 0.10
+      pour_above_offset: 0.15
+      #TODO ADD NEW GRASP ANGLE FOR MILK AND CEREAL
+      pour_wait_time: 2.0
       grasp_offset: -0.01
