@@ -180,9 +180,9 @@ manipulation_task_server:
 
 ## Requirements
 
-Install dependencies:
 
 ```bash
+# 1. Install dependencies:
 cd ~/fbot_ws/src
 git clone https://github.com/fbotathome/xarm_ros2.git
 sudo apt-get install ros-humble-moveit-task-constructor-"*"
