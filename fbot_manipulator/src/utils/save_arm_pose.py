@@ -31,7 +31,7 @@ class SaveArmPose(Node):
         )
         self.xacro_path = self.get_parameter("xacro_path").get_parameter_value().string_value
 
-        self.subscription_ = self.create_subscription(JointState, "/joint_states", self.joint_state_callback, 10)
+        self.subscription_ = self.create_subscription(JointState, "/xarm/joint_states", self.joint_state_callback, 10)
         self.save_loop_started = False
         self.done_saving = False
 
@@ -117,7 +117,7 @@ class SaveArmPose(Node):
                 )
                 continue
 
-            success, message = wait_for_message(msg_type= JointState, node=self, topic='/joint_states', time_to_wait=2)
+            success, message = wait_for_message(msg_type= JointState, node=self, topic='/xarm/joint_states', time_to_wait=2)
             if not success or message is None:
                 self.get_logger().warning("Timed out waiting for /joint_states. Pose not saved.")
                 continue
