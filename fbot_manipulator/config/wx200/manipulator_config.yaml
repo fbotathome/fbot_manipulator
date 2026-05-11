@@ -1,0 +1,17 @@
+moveit_controllers:
+  traj: arm_controller
+  gripper_traj: gripper_controller
+
+joints:
+  arm_joints:
+    - waist
+    - shoulder
+    - elbow
+    - wrist_angle
+    - wrist_rotate
+  gripper_joints:
+    - left_finger
+
+poses:
+  home: [0.0, 0.0, 0.0, 0.0, 0.0]
+  holdup: [0.0, -1.0, 1.0, 0.0, 0.0]

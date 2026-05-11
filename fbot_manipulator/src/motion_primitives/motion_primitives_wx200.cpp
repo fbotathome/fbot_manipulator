@@ -1,4 +1,4 @@
-#include "fbot_manipulator/motion_primitives_xarm.hpp"
+#include "fbot_manipulator/motion_primitives_wx200.hpp"
 
 #include <chrono>
 #include <exception>
@@ -8,19 +8,19 @@ using namespace std::chrono_literals;
 namespace fbot_manipulator
 {
 
-MotionPrimitivesXArm::MotionPrimitivesXArm(const rclcpp::Node::SharedPtr& node, const std::string& arm_name)
+MotionPrimitivesWX200::MotionPrimitivesWX200(const rclcpp::Node::SharedPtr& node, const std::string& arm_name)
     : MotionPrimitivesBase(node, arm_name)
 {
     init();
 }
 
-MotionPrimitivesXArm::MotionPrimitivesXArm(const std::string& arm_name)
+MotionPrimitivesWX200::MotionPrimitivesWX200(const std::string& arm_name)
     : MotionPrimitivesBase(arm_name)
 {
     init();
 }
 
-bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
+bool MotionPrimitivesWX200::moveToNamedTarget(const std::string& target_name)
 {
     auto poses = manipulator_config_["poses"];
     if (!poses[target_name]) {
@@ -57,7 +57,7 @@ bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
     return true;
 }
 
-bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_positions)
+bool MotionPrimitivesWX200::moveToJointTarget(const std::vector<double>& joint_positions)
 {
     auto plan_success = planJointTarget(joint_positions);
 
@@ -84,7 +84,7 @@ bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_po
     return true;
 }
 
-bool MotionPrimitivesXArm::moveToPose(const geometry_msgs::msg::Pose& pose)
+bool MotionPrimitivesWX200::moveToPose(const geometry_msgs::msg::Pose& pose)
 {
 
     auto plan_success = planPoseTarget(pose);

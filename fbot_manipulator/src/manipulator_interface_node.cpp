@@ -8,6 +8,7 @@
 
 #include "fbot_manipulator/motion_primitives_base.hpp"
 #include "fbot_manipulator/motion_primitives_xarm.hpp"
+#include "fbot_manipulator/motion_primitives_wx200.hpp"
 
 #define BIND_CLS_CB(func) std::bind(func, this, std::placeholders::_1, std::placeholders::_2)
 
@@ -56,7 +57,10 @@ ManipulationInterface::ManipulationInterface(rclcpp::Node::SharedPtr node)
 
     if (arm_type == "xarm6") {
         motion_primitives_ = std::make_shared<MotionPrimitivesXArm>(node_, arm_type);
-    } 
+    }
+    else if (arm_type == "wx200") {
+        motion_primitives_ = std::make_shared<MotionPrimitivesWX200>(node_, arm_type);
+    }
     // add more arms here:
     // else if (arm_type == "ur5") { motion_primitives_ = std::make_shared<MotionPrimitivesUR5>(node_, arm_type); }
     else {

@@ -172,12 +172,27 @@ colcon build --packages-select fbot_manipulator_msgs fbot_manipulator
 ### Launch
 
 ```bash
-# 1. Launch MoveIt with MTC support (xArm example)
+# --- xArm6 (simulation) ---
+# 1. Launch MoveIt with MTC support
 ros2 launch xarm_moveit_config xarm6_moveit_fake.launch.py add_gripper:=true add_mtc:=true
 
 # 2. Launch fbot_manipulator nodes (in a new terminal)
 ros2 launch fbot_manipulator manipulator_interface.launch.py arm_type:=xarm6
 ```
+
+```bash
+# --- WidowX 200 / wx200 (real hardware) ---
+# 1. Launch the Interbotix MoveIt bringup (starts move_group + xs_sdk hardware interface)
+ros2 launch interbotix_xsarm_moveit xsarm_moveit.launch.py robot_model:=wx200 hardware_type:=actual
+
+# 2. Launch fbot_manipulator nodes (in a new terminal)
+ros2 launch fbot_manipulator manipulator_interface_wx200.launch.py
+```
+
+The wx200 launch file references YAML files inside the `interbotix_xsarm_moveit`
+package share. If your installed Interbotix release uses a different layout
+(e.g., a `wx200/` subdirectory, or a different `controllers.yaml` filename),
+update the paths in `launch/manipulator_interface_wx200.launch.py` to match.
 
 ### Send a pick-and-place goal
 
@@ -205,10 +220,12 @@ ros2 service call /fbot_manipulator/set_gripper_position \
 
 ## Adding a New Robot
 
-1. Create `config/<robot_name>/manipulator_config.yaml` with the robot's joint names, controllers, poses, and MTC parameters
-2. Implement a new `MotionPrimitives<Robot>` class inheriting from `MotionPrimitivesBase`
-3. Add the arm type case to `manipulator_interface_node.cpp`
-4. Launch with `arm_type:=<robot_name>`
+1. Create `config/<robot_name>/manipulator_config.yaml` with the robot's joint names, controllers, and named poses
+2. Create `config/<robot_name>/mtc_config.yaml` with the MoveIt group names, hand frame, and MTC offsets
+3. Implement a new `MotionPrimitives<Robot>` class inheriting from `MotionPrimitivesBase` (header in `include/fbot_manipulator/`, source in `src/motion_primitives/`)
+4. Add the new `.cpp` to the `manipulator_interface_node` target in `CMakeLists.txt`
+5. Add the arm type case to `manipulator_interface_node.cpp`
+6. Either add the robot to the existing `manipulator_interface.launch.py` or create a per-arm launch file (see `manipulator_interface_wx200.launch.py` for an example pointing at a non-xArm MoveIt config package)
 
 ## Contributing
 

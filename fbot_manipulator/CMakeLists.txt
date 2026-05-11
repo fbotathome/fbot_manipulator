@@ -33,6 +33,7 @@ add_executable(manipulator_interface_node
   src/manipulator_interface_node.cpp
   src/motion_primitives/motion_primitives_base.cpp
   src/motion_primitives/motion_primitives_xarm.cpp
+  src/motion_primitives/motion_primitives_wx200.cpp
   src/utils.cpp
 )
 
