@@ -1,0 +1,26 @@
+manipulation_task_server:
+  ros__parameters:
+    mtc:
+      arm_group_name: "interbotix_arm"
+      hand_group_name: "interbotix_gripper"
+      hand_frame: "wx200/ee_gripper_link"   # Interbotix prefixes link names with <robot_name>; default robot_name is "wx200"
+      world_frame: "world"
+      surface_link: "world"
+      # SRDF named group states (from the Interbotix SRDF, e.g. wx200.srdf.xacro)
+      hand_open_state: "Released"
+      hand_closed_state: "Grasping"
+      arm_home_state: "Sleep"      # final resting pose
+      arm_ready_state: "Home"      # pose held after a successful pick
+      approach_min: 0.05
+      approach_max: 0.15
+      lift_min: 0.05
+      lift_max: 0.15
+      retreat_min: 0.05
+      retreat_max: 0.25
+      max_solutions: 2
+      grasp_angle_delta: 0.262
+      grasp_offset: -0.01           # along the approach axis (negative = grasp deeper toward the arm)
+      # Rotation [roll, pitch, yaw] from hand_frame to the grasp IK frame (IK-frame X = approach).
+      # The Interbotix ee_gripper_link is already X-forward, so no rotation is needed.
+      # If grasps come out pointing the wrong way, try [0.0, 0.0, 3.14159].
+      grasp_frame_rpy: [0.0, 0.0, 0.0]

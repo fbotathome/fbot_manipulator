@@ -14,4 +14,7 @@ manipulation_task_server:
       retreat_max: 0.25
       max_solutions: 2
       grasp_angle_delta: 0.262
-      grasp_offset: -0.01
+      grasp_offset: -0.01           # along the approach axis (negative = grasp deeper toward the arm)
+      # Rotation [roll, pitch, yaw] from hand_frame to the grasp IK frame (IK-frame X = approach).
+      # link_tcp is Z-forward, so rotate Z -> X here. This matches the built-in default.
+      grasp_frame_rpy: [0.0, -1.5707963, 3.1415927]

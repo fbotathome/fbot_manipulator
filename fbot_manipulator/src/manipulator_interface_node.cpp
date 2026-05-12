@@ -58,7 +58,9 @@ ManipulationInterface::ManipulationInterface(rclcpp::Node::SharedPtr node)
     if (arm_type == "xarm6") {
         motion_primitives_ = std::make_shared<MotionPrimitivesXArm>(node_, arm_type);
     }
-    else if (arm_type == "wx200") {
+    else if (arm_type == "interbotix_arm") {
+        // Interbotix X-Series arms (e.g. WidowX 200) -- arm_type matches the MoveIt
+        // planning group name defined in the Interbotix SRDF.
         motion_primitives_ = std::make_shared<MotionPrimitivesWX200>(node_, arm_type);
     }
     // add more arms here:

@@ -42,7 +42,7 @@ bool MtcPickAndPlaceTask::buildTask()
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("open gripper", joint_planner_);
         stage->setGroup(config_.hand_group_name);
-        stage->setGoal("open");
+        stage->setGoal(config_.hand_open_state);
         task_.add(std::move(stage));
     }
 
@@ -73,9 +73,16 @@ bool MtcPickAndPlaceTask::buildTask()
             stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
             stage->setMinMaxDistance(config_.approach_min, config_.approach_max);
 
+            // Move along the approach axis: X of the grasp IK frame, expressed in hand_frame.
+            // (xarm6: grasp_frame_transform maps X->Z, so this is (0,0,1) as before; the Interbotix
+            // ee_gripper_link is X-forward, so this is (1,0,0).)
+            const Eigen::Vector3d approach_axis =
+                config_.grasp_frame_transform.linear() * Eigen::Vector3d::UnitX();
             geometry_msgs::msg::Vector3Stamped vec;
             vec.header.frame_id = config_.hand_frame;
-            vec.vector.z = 1.0;
+            vec.vector.x = approach_axis.x();
+            vec.vector.y = approach_axis.y();
+            vec.vector.z = approach_axis.z();
             stage->setDirection(vec);
             container->insert(std::move(stage));
         }
@@ -85,7 +92,7 @@ bool MtcPickAndPlaceTask::buildTask()
             auto stage = std::make_unique<mtc::stages::GenerateGraspPose>("generate grasp pose");
             stage->properties().configureInitFrom(mtc::Stage::PARENT);
             stage->properties().set("marker_ns", "grasp_pose");
-            stage->setPreGraspPose("open");
+            stage->setPreGraspPose(config_.hand_open_state);
             stage->setObject(object_id_);
             stage->setAngleDelta(config_.grasp_angle_delta);
             stage->setMonitoredStage(current_state);
@@ -115,7 +122,7 @@ bool MtcPickAndPlaceTask::buildTask()
         {
             auto stage = std::make_unique<mtc::stages::MoveTo>("close gripper", joint_planner_);
             stage->setGroup(config_.hand_group_name);
-            stage->setGoal("close");
+            stage->setGoal(config_.hand_closed_state);
             container->insert(std::move(stage));
         }
 
@@ -163,7 +170,7 @@ bool MtcPickAndPlaceTask::buildTask()
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
-        stage->setGoal("hold-up");
+        stage->setGoal(config_.arm_ready_state);
         task_.add(std::move(stage));
     }
 
@@ -213,7 +220,7 @@ bool MtcPickAndPlaceTask::buildTask()
             {
                 auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
                 stage->setGroup(config_.hand_group_name);
-                stage->setGoal("open");
+                stage->setGoal(config_.hand_open_state);
                 container->insert(std::move(stage));
             }
 
@@ -267,7 +274,7 @@ bool MtcPickAndPlaceTask::buildTask()
         {
             auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
             stage->setGroup(config_.hand_group_name);
-            stage->setGoal("open");
+            stage->setGoal(config_.hand_open_state);
             task_.add(std::move(stage));
         }
 
@@ -301,7 +308,7 @@ bool MtcPickAndPlaceTask::buildTask()
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
-        stage->setGoal("hold-up");
+        stage->setGoal(config_.arm_ready_state);
         task_.add(std::move(stage));
     }
 

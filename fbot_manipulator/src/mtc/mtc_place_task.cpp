@@ -100,7 +100,7 @@ bool MtcPlaceTask::buildTask()
             {
                 auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
                 stage->setGroup(config_.hand_group_name);
-                stage->setGoal("open");
+                stage->setGoal(config_.hand_open_state);
                 container->insert(std::move(stage));
             }
 
@@ -154,7 +154,7 @@ bool MtcPlaceTask::buildTask()
         {
             auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
             stage->setGroup(config_.hand_group_name);
-            stage->setGoal("open");
+            stage->setGoal(config_.hand_open_state);
             task_.add(std::move(stage));
         }
 
@@ -188,7 +188,7 @@ bool MtcPlaceTask::buildTask()
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
-        stage->setGoal("home");
+        stage->setGoal(config_.arm_home_state);
         task_.add(std::move(stage));
     }
 

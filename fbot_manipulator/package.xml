@@ -20,6 +20,13 @@
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
 
+  <!-- Runtime-only: used by manipulator_interface_wx200.launch.py to build the
+       URDF/SRDF and to read the Interbotix MoveIt config (kinematics / OMPL /
+       joint limits / controllers). Needed for the wx200 launch path. -->
+  <exec_depend>interbotix_xs_modules</exec_depend>
+  <exec_depend>interbotix_xsarm_moveit</exec_depend>
+  <exec_depend>interbotix_xsarm_descriptions</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

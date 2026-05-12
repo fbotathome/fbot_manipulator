@@ -19,6 +19,10 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.hand_frame", config_.hand_frame, config_.hand_frame);
     node_->get_parameter_or("mtc.world_frame", config_.world_frame, config_.world_frame);
     node_->get_parameter_or("mtc.surface_link", config_.surface_link, config_.surface_link);
+    node_->get_parameter_or("mtc.hand_open_state", config_.hand_open_state, config_.hand_open_state);
+    node_->get_parameter_or("mtc.hand_closed_state", config_.hand_closed_state, config_.hand_closed_state);
+    node_->get_parameter_or("mtc.arm_home_state", config_.arm_home_state, config_.arm_home_state);
+    node_->get_parameter_or("mtc.arm_ready_state", config_.arm_ready_state, config_.arm_ready_state);
     node_->get_parameter_or("mtc.approach_min", config_.approach_min, config_.approach_min);
     node_->get_parameter_or("mtc.approach_max", config_.approach_max, config_.approach_max);
     node_->get_parameter_or("mtc.lift_min", config_.lift_min, config_.lift_min);
@@ -28,19 +32,33 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.max_solutions", config_.max_solutions, config_.max_solutions);
     node_->get_parameter_or("mtc.grasp_angle_delta", config_.grasp_angle_delta, config_.grasp_angle_delta);
 
-    // Grasp frame: rotate Z to point out of gripper with offset
+    // Grasp IK frame relative to hand_frame. Convention: the IK frame's X axis is the
+    // gripper approach direction (what GenerateGraspPose expects), and grasp_offset shifts
+    // the grasp point along that approach axis. The rotation (grasp_frame_rpy) depends on
+    // the robot's hand-frame convention -- the defaults reproduce the original xArm6/link_tcp
+    // transform; the Interbotix ee_gripper_link is already X-forward, so it uses [0, 0, 0].
     double grasp_offset = 0.0;
     node_->get_parameter_or("mtc.grasp_offset", grasp_offset, 0.0);
 
-    config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
-    // First translate along Z (which becomes the approach direction after rotation)
-    config_.grasp_frame_transform.translate(Eigen::Vector3d(0, 0, grasp_offset));
-    // Rotate to align gripper approach direction, then flip 180° around Z to correct wrist orientation
-    config_.grasp_frame_transform.rotate(
-        Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()) *
-        Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ()));
+    std::vector<double> grasp_rpy;
+    node_->get_parameter_or("mtc.grasp_frame_rpy", grasp_rpy, config_.grasp_frame_rpy);
+    if (grasp_rpy.size() != 3) {
+        RCLCPP_WARN(logger(),
+                    "[MtcTask:%s] mtc.grasp_frame_rpy must have 3 elements [roll,pitch,yaw]; using default",
+                    task_name_.c_str());
+        grasp_rpy = {0.0, -M_PI / 2, M_PI};
+    }
 
-    RCLCPP_INFO(logger(), "[MtcTask:%s] Grasp offset: %.3f m", task_name_.c_str(), grasp_offset);
+    config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
+    config_.grasp_frame_transform.rotate(
+        Eigen::AngleAxisd(grasp_rpy[2], Eigen::Vector3d::UnitZ()) *
+        Eigen::AngleAxisd(grasp_rpy[1], Eigen::Vector3d::UnitY()) *
+        Eigen::AngleAxisd(grasp_rpy[0], Eigen::Vector3d::UnitX()));
+    config_.grasp_frame_transform.translate(Eigen::Vector3d(grasp_offset, 0.0, 0.0));
+
+    RCLCPP_INFO(logger(),
+                "[MtcTask:%s] Grasp: offset=%.3f m along approach, frame_rpy=[%.3f, %.3f, %.3f]",
+                task_name_.c_str(), grasp_offset, grasp_rpy[0], grasp_rpy[1], grasp_rpy[2]);
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Config loaded: arm='%s', hand='%s', frame='%s'",
                 task_name_.c_str(),
