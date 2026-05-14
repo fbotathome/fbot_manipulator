@@ -51,7 +51,7 @@ bool MotionPrimitivesXArm::moveToJointTarget(const std::vector<double>& joint_po
         return false;
     }
 
-    RCLCPP_INFO(node_->get_logger(), "Plan to named target '%s' succeeded, executing...", target_name.c_str());
+    RCLCPP_INFO(node_->get_logger(), "[MotionPrimitives] plan_joint succeeded, executing...");
 
     auto exec_success = executePath();
 
