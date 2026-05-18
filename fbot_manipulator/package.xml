@@ -13,7 +13,6 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>fbot_manipulator_msgs</depend>
-  <depend>xarm_msgs</depend>
   <depend>yaml-cpp</depend>
   <depend>moveit_task_constructor_core</depend>
   <depend>moveit_task_constructor_capabilities</depend>
