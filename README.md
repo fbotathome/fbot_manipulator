@@ -177,6 +177,18 @@ manipulation_task_server:
       pour_wait_time: 2.0      # seconds - wait time during pouring
 ```
 
+
+## Requirements
+
+
+```bash
+# 1. Install dependencies:
+cd ~/fbot_ws/src
+git clone https://github.com/fbotathome/xarm_ros2.git
+sudo apt-get install ros-humble-moveit-task-constructor-"*"
+sudo apt-get install ros-humble-moveit-core ros-humble-moveit-ros-planning ros-humble-moveit-ros-planning-interface
+```
+
 ## Usage
 
 ### Build
