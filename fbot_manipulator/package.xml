@@ -11,6 +11,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
   <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>fbot_manipulator_msgs</depend>
   <depend>xarm_msgs</depend>
   <depend>yaml-cpp</depend>

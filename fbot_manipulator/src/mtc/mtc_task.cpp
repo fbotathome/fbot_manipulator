@@ -1,6 +1,7 @@
 #include "fbot_manipulator/mtc/mtc_task.hpp"
 #include <moveit_msgs/msg/planning_scene.hpp>
 
+#include <chrono>
 
 namespace fbot_manipulator
 {
@@ -31,6 +32,10 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.retreat_max", config_.retreat_max, config_.retreat_max);
     node_->get_parameter_or("mtc.max_solutions", config_.max_solutions, config_.max_solutions);
     node_->get_parameter_or("mtc.grasp_angle_delta", config_.grasp_angle_delta, config_.grasp_angle_delta);
+    node_->get_parameter_or("mtc.pour_angle_delta", config_.pour_angle_delta, config_.pour_angle_delta);
+    node_->get_parameter_or("mtc.pour_wait_time", config_.pour_wait_time, config_.pour_wait_time);
+    node_->get_parameter_or("mtc.pour_side_offset", config_.pour_side_offset, config_.pour_side_offset);
+    node_->get_parameter_or("mtc.pour_above_offset", config_.pour_above_offset, config_.pour_above_offset);
 
     // Grasp frame: rotate Z to point out of gripper with offset
     double grasp_offset = 0.0;
@@ -58,9 +63,15 @@ void MtcTask::loadConfig()
 void MtcTask::setupSolvers()
 {
     pipeline_planner_ = std::make_shared<mtc::solvers::PipelinePlanner>(node_, "ompl");
-    pipeline_planner_->setPlannerId("RRTConnectkConfigDefault");
+    //pipeline_planner_->setPlannerId("RRTConnectkConfigDefault");
+    pipeline_planner_->setMaxVelocityScalingFactor(0.3);
+    pipeline_planner_->setMaxAccelerationScalingFactor(0.1);
 
     cartesian_planner_ = std::make_shared<mtc::solvers::CartesianPath>();
+    cartesian_planner_->setMaxVelocityScalingFactor(0.5);
+    cartesian_planner_->setMaxAccelerationScalingFactor(0.5);
+    cartesian_planner_->setStepSize(0.002);
+
     joint_planner_ = std::make_shared<mtc::solvers::JointInterpolationPlanner>();
     
 }
