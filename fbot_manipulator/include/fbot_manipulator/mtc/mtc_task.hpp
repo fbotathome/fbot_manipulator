@@ -13,6 +13,7 @@
 
 #if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp>)
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <moveit_msgs/msg/planning_scene.hpp>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #endif
@@ -38,6 +39,7 @@ struct MtcConfig
     int max_solutions = 5;
     double grasp_angle_delta = M_PI / 4;
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
+    double support_height = 0.01; // thin support collision placed below the object
 };
 
 class MtcTask
@@ -85,6 +87,7 @@ protected:
     std::shared_ptr<mtc::solvers::JointInterpolationPlanner> joint_planner_;
 
     moveit::planning_interface::PlanningSceneInterface psi_;
+    rclcpp::Publisher<moveit_msgs::msg::PlanningScene>::SharedPtr planning_scene_pub_;
 
     geometry_msgs::msg::Pose object_pose_;
     geometry_msgs::msg::Vector3 object_size_;
