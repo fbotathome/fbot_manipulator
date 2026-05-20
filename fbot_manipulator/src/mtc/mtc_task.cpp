@@ -56,6 +56,7 @@ void MtcTask::setupSolvers()
 
     cartesian_planner_ = std::make_shared<mtc::solvers::CartesianPath>();
     joint_planner_ = std::make_shared<mtc::solvers::JointInterpolationPlanner>();
+    
 }
 
 void MtcTask::addCollisionObject(const std::string& object_id,
@@ -87,6 +88,73 @@ void MtcTask::removeCollisionObject(const std::string& object_id)
     psi_.applyCollisionObject(object);
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed collision object '%s'",
+                task_name_.c_str(), object_id.c_str());
+}
+
+void MtcTask::setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
+                             const geometry_msgs::msg::Vector3& size)
+{
+    object_pose_ = pose;
+    object_size_ = size;
+    has_surface_info_ = true;
+}
+
+void MtcTask::createSupportSurface(const std::string& object_id)
+{
+    if (!has_surface_info_)
+    {
+        RCLCPP_WARN(logger(), "[MtcTask:%s] No surface info provided, skipping support surface",
+                    task_name_.c_str());
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj;
+    support_obj.id = object_id + "_support";
+    support_obj.header.frame_id = config_.world_frame;
+
+    shape_msgs::msg::SolidPrimitive primitive;
+    primitive.type = shape_msgs::msg::SolidPrimitive::BOX;
+    primitive.dimensions.resize(3);
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = object_size_.x + 0.1;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.1;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = 0.02;
+
+    geometry_msgs::msg::Pose support_pose;
+    support_pose.position.x = object_pose_.position.x;
+    support_pose.position.y = object_pose_.position.y;
+    support_pose.position.z = object_pose_.position.z - (object_size_.z / 2.0) - 0.01;
+    support_pose.orientation.x = 0.0;
+    support_pose.orientation.y = 0.0;
+    support_pose.orientation.z = 0.0;
+    support_pose.orientation.w = 1.0;
+
+    support_obj.primitives.push_back(primitive);
+    support_obj.primitive_poses.push_back(support_pose);
+    support_obj.operation = moveit_msgs::msg::CollisionObject::ADD;
+
+    psi_.applyCollisionObject(support_obj);
+
+    RCLCPP_INFO(logger(),
+               "[MtcTask:%s] Added support surface for '%s' at (%.2f, %.2f, %.2f)",
+               task_name_.c_str(), object_id.c_str(),
+               support_pose.position.x, support_pose.position.y, support_pose.position.z);
+}
+
+void MtcTask::removeSupportSurface(const std::string& object_id)
+{
+    if (!has_surface_info_)
+    {
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj;
+    support_obj.id = object_id + "_support";
+    support_obj.header.frame_id = config_.world_frame;
+    support_obj.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+
+    psi_.applyCollisionObject(support_obj);
+
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Removed support surface '%s_support'",
                 task_name_.c_str(), object_id.c_str());
 }
 

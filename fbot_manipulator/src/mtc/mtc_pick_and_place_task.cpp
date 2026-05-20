@@ -14,6 +14,8 @@ MtcPickAndPlaceTask::MtcPickAndPlaceTask(rclcpp::Node::SharedPtr node,
 
 bool MtcPickAndPlaceTask::buildTask()
 {
+    createSupportSurface(object_id_);
+
     task_.stages()->setName("pick_and_place_" + object_id_);
     task_.loadRobotModel(node_);
 

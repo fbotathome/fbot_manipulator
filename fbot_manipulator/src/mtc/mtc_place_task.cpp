@@ -14,6 +14,8 @@ MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
 
 bool MtcPlaceTask::buildTask()
 {
+    createSupportSurface(object_id_);
+
     task_.stages()->setName("place_" + object_id_);
     task_.loadRobotModel(node_);
 
@@ -49,6 +51,15 @@ bool MtcPlaceTask::buildTask()
 
         // Lower
         {
+            // Allow collision with object during lower
+            auto allow_collision = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision during lower");
+            allow_collision->allowCollisions(object_id_,
+                                             task_.getRobotModel()
+                                                 ->getJointModelGroup(config_.arm_group_name)
+                                                 ->getLinkModelNamesWithCollisionGeometry(),
+                                             true);
+            container->insert(std::move(allow_collision));
+
             auto stage = std::make_unique<mtc::stages::MoveRelative>("lower object", cartesian_planner_);
             stage->properties().set("marker_ns", "lower");
             stage->properties().set("link", config_.hand_frame);
@@ -113,6 +124,15 @@ bool MtcPlaceTask::buildTask()
 
         // Retreat
         {
+            // Allow collision with object during retreat
+            auto allow_collision = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision during retreat");
+            allow_collision->allowCollisions(object_id_,
+                                             task_.getRobotModel()
+                                                 ->getJointModelGroup(config_.arm_group_name)
+                                                 ->getLinkModelNamesWithCollisionGeometry(),
+                                             true);
+            container->insert(std::move(allow_collision));
+
             auto stage = std::make_unique<mtc::stages::MoveRelative>("retreat", cartesian_planner_);
             stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
             stage->setMinMaxDistance(config_.retreat_min, config_.retreat_max);

@@ -57,6 +57,13 @@ public:
 
     void removeCollisionObject(const std::string& object_id);
 
+    void setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
+                        const geometry_msgs::msg::Vector3& size);
+
+    void createSupportSurface(const std::string& object_id);
+
+    void removeSupportSurface(const std::string& object_id);
+
     virtual bool buildTask() = 0;
 
     bool plan();
@@ -79,7 +86,11 @@ protected:
 
     moveit::planning_interface::PlanningSceneInterface psi_;
 
-    rclcpp::Logger logger() const { return node_->get_logger(); }
+    geometry_msgs::msg::Pose object_pose_;
+    geometry_msgs::msg::Vector3 object_size_;
+    bool has_surface_info_ = false;
+
+    rclcpp::Logger logger() const { return node_->get_logger(); };
 };
 
 } // namespace fbot_manipulator

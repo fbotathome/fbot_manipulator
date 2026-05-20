@@ -12,6 +12,9 @@ MtcPickTask::MtcPickTask(rclcpp::Node::SharedPtr node,
 
 bool MtcPickTask::buildTask()
 {
+    // Create support surface if we have surface info
+    createSupportSurface(object_id_);
+
     task_.stages()->setName("pick_" + object_id_);
     task_.loadRobotModel(node_);
 
@@ -55,6 +58,15 @@ bool MtcPickTask::buildTask()
 
         // Approach
         {
+            // Allow collision with object during approach
+            auto allow_collision = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision during approach");
+            allow_collision->allowCollisions(object_id_,
+                                             task_.getRobotModel()
+                                                 ->getJointModelGroup(config_.arm_group_name)
+                                                 ->getLinkModelNamesWithCollisionGeometry(),
+                                             true);
+            container->insert(std::move(allow_collision));
+
             auto stage = std::make_unique<mtc::stages::MoveRelative>("approach object", cartesian_planner_);
             stage->properties().set("marker_ns", "approach");
             stage->properties().set("link", config_.hand_frame);
