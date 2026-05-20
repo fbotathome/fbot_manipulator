@@ -1,4 +1,6 @@
 #include "fbot_manipulator/mtc/mtc_task.hpp"
+#include <moveit_msgs/msg/planning_scene.hpp>
+
 
 namespace fbot_manipulator
 {
@@ -10,6 +12,8 @@ MtcTask::MtcTask(const std::string& task_name,
 {
     loadConfig();
     setupSolvers();
+    planning_scene_pub_ = node_->create_publisher<moveit_msgs::msg::PlanningScene>(
+        "/planning_scene", 10);
 }
 
 void MtcTask::loadConfig()
@@ -31,6 +35,8 @@ void MtcTask::loadConfig()
     // Grasp frame: rotate Z to point out of gripper with offset
     double grasp_offset = 0.0;
     node_->get_parameter_or("mtc.grasp_offset", grasp_offset, 0.0);
+
+    node_->get_parameter_or("mtc.support_height", config_.support_height, config_.support_height);
 
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
     // First translate along Z (which becomes the approach direction after rotation)
@@ -72,6 +78,33 @@ void MtcTask::addCollisionObject(const std::string& object_id,
 
     psi_.applyCollisionObject(object);
 
+    if (planning_scene_pub_) {
+        moveit_msgs::msg::PlanningScene ps;
+        ps.world.collision_objects.push_back(object);
+        ps.is_diff = true;
+        planning_scene_pub_->publish(ps);
+    }
+
+    // Add small support object underneath the detected object so the planner
+    // treats the supporting surface as an obstacle and avoids penetrating it.
+    moveit_msgs::msg::CollisionObject support;
+    support.id = object_id + std::string("_support");
+    support.header.frame_id = config_.world_frame;
+    support.primitives.resize(1);
+    support.primitives[0].type = shape_msgs::msg::SolidPrimitive::BOX;
+    support.primitives[0].dimensions = { size.x, size.y, config_.support_height };
+    geometry_msgs::msg::Pose support_pose = pose;
+    support_pose.position.z = pose.position.z - (size.z / 2.0) - (config_.support_height / 2.0) - 0.004;
+    support.pose = support_pose;
+
+    psi_.applyCollisionObject(support);
+    if (planning_scene_pub_) {
+        moveit_msgs::msg::PlanningScene ps2;
+        ps2.world.collision_objects.push_back(support);
+        ps2.is_diff = true;
+        planning_scene_pub_->publish(ps2);
+    }
+
     RCLCPP_INFO(logger(), "[MtcTask:%s] Added collision object '%s' at (%.2f, %.2f, %.2f) size (%.2f, %.2f, %.2f)",
                 task_name_.c_str(), object_id.c_str(),
                 pose.position.x, pose.position.y, pose.position.z,
@@ -85,6 +118,13 @@ void MtcTask::removeCollisionObject(const std::string& object_id)
     object.header.frame_id = config_.world_frame;
     object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
     psi_.applyCollisionObject(object);
+
+    if (planning_scene_pub_) {
+        moveit_msgs::msg::PlanningScene ps;
+        ps.world.collision_objects.push_back(object);
+        ps.is_diff = true;
+        planning_scene_pub_->publish(ps);
+    }
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed collision object '%s'",
                 task_name_.c_str(), object_id.c_str());
