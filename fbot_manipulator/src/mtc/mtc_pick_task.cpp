@@ -149,6 +149,22 @@ bool MtcPickTask::buildTask()
             container->insert(std::move(stage));
         }
 
+        // Move backwards after lifting the object
+        {
+            auto stage = std::make_unique<mtc::stages::MoveRelative>("move backwards", cartesian_planner_);
+            stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
+            stage->setMinMaxDistance(config_.retreat_min, config_.retreat_max);
+            stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
+            stage->properties().set("marker_ns", "retreat");
+            stage->properties().set("link", config_.hand_frame);
+
+            geometry_msgs::msg::Vector3Stamped vec;
+            vec.header.frame_id = config_.hand_frame;
+            vec.vector.z = -1.5;
+            stage->setDirection(vec);
+            container->insert(std::move(stage));
+        }
+
         // Forbid object-surface collision
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (object,surface)");

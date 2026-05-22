@@ -166,19 +166,18 @@ void MtcTask::createSupportSurface(const std::string& object_id)
     shape_msgs::msg::SolidPrimitive primitive;
     primitive.type = shape_msgs::msg::SolidPrimitive::BOX;
     primitive.dimensions.resize(3);
-    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = object_size_.x + 0.1;
-    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.1;
-    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = 0.02;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = object_size_.x + 0.2;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.7;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = 0.01;
 
     geometry_msgs::msg::Pose support_pose;
-    support_pose.position.x = object_pose_.position.x;
+    support_pose.position.x = object_pose_.position.x + 0.06;
     support_pose.position.y = object_pose_.position.y;
-    support_pose.position.z = object_pose_.position.z - (object_size_.z / 2.0) - 0.01;
+    support_pose.position.z = object_pose_.position.z - (object_size_.z / 2.0) - 0.02;
     support_pose.orientation.x = 0.0;
     support_pose.orientation.y = 0.0;
     support_pose.orientation.z = 0.0;
     support_pose.orientation.w = 1.0;
-
     support_obj.primitives.push_back(primitive);
     support_obj.primitive_poses.push_back(support_pose);
     support_obj.operation = moveit_msgs::msg::CollisionObject::ADD;
