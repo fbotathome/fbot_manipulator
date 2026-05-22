@@ -42,8 +42,9 @@ class GripperPwmBridge(Node):
         self.declare_parameter('open_is_positive', True)          # +pwm opens (fbot_behavior)
         self.declare_parameter('stall_velocity', 0.002)           # m/s ~ fingers stopped
         self.declare_parameter('stall_time', 0.3)                 # s below thresh => settled
+        self.declare_parameter('min_run_time', 0.4)               # s spin-up grace before stall counts
         self.declare_parameter('timeout', 3.0)                    # s safety cap on a move
-        self.declare_parameter('position_tolerance', 0.003)       # m, open-reached tolerance
+        self.declare_parameter('position_tolerance', 0.003)       # m, target-reached tolerance
         self.declare_parameter('hold_after_grasp', True)          # keep PWM applied while gripping
 
         g = self.get_parameter
@@ -54,6 +55,7 @@ class GripperPwmBridge(Node):
         self._open_is_positive = bool(g('open_is_positive').value)
         self._stall_velocity = float(g('stall_velocity').value)
         self._stall_time = float(g('stall_time').value)
+        self._min_run_time = float(g('min_run_time').value)
         self._timeout = float(g('timeout').value)
         self._pos_tol = float(g('position_tolerance').value)
         self._hold_after_grasp = bool(g('hold_after_grasp').value)
@@ -130,22 +132,31 @@ class GripperPwmBridge(Node):
 
         start = time.time()
         settled_at = None
+        moving_seen = False
         while rclpy.ok():
-            if time.time() - start > self._timeout:
+            now = time.time()
+            if now - start > self._timeout:
                 self.get_logger().warn("Gripper move timed out; treating as settled.")
                 break
             pos, vel = self._state()
-            # opening: done once we reach the commanded opening
-            if opening and pos is not None and pos >= target - self._pos_tol:
-                break
-            # either direction: done once the fingers stop (object contact / hard stop)
-            if abs(vel) < self._stall_velocity:
-                if settled_at is None:
-                    settled_at = time.time()
-                elif time.time() - settled_at >= self._stall_time:
+            # reached the commanded position (the normal stop for an unobstructed move)
+            if pos is not None:
+                if opening and pos >= target - self._pos_tol:
                     break
-            else:
+                if closing and pos <= target + self._pos_tol:
+                    break
+            # Stall = fingers stop after they've actually started moving. The motor needs
+            # a moment to spin up, so the initial at-rest reading must NOT count as a stall
+            # (that was cutting opens short, one nudge per press). Only arm the stall check
+            # once we've seen real motion and a short spin-up grace has elapsed.
+            if abs(vel) >= self._stall_velocity:
+                moving_seen = True
                 settled_at = None
+            elif moving_seen and now - start >= self._min_run_time:
+                if settled_at is None:
+                    settled_at = now
+                elif now - settled_at >= self._stall_time:
+                    break
             fb = GripperCommand.Feedback()
             fb.position = pos if pos is not None else target
             fb.effort = cmd
