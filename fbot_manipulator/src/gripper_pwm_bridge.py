@@ -145,18 +145,19 @@ class GripperPwmBridge(Node):
                     break
                 if closing and pos <= target + self._pos_tol:
                     break
-            # Stall = fingers stop after they've actually started moving. The motor needs
-            # a moment to spin up, so the initial at-rest reading must NOT count as a stall
-            # (that was cutting opens short, one nudge per press). Only arm the stall check
-            # once we've seen real motion and a short spin-up grace has elapsed.
-            if abs(vel) >= self._stall_velocity:
-                moving_seen = True
-                settled_at = None
-            elif moving_seen and now - start >= self._min_run_time:
-                if settled_at is None:
-                    settled_at = now
-                elif now - settled_at >= self._stall_time:
-                    break
+            # Stall-based stop applies to CLOSING only (grip on an object, or the closed
+            # limit). OPENING always runs to the target position (or the timeout): velocity
+            # dips while opening -- stick-slip, slow travel, a noisy encoder -- must NOT cut
+            # it short, which was the "creeps open one press at a time" bug.
+            if closing:
+                if abs(vel) >= self._stall_velocity:
+                    moving_seen = True
+                    settled_at = None
+                elif moving_seen and now - start >= self._min_run_time:
+                    if settled_at is None:
+                        settled_at = now
+                    elif now - settled_at >= self._stall_time:
+                        break
             fb = GripperCommand.Feedback()
             fb.position = pos if pos is not None else target
             fb.effort = cmd
