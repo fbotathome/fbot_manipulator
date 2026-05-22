@@ -18,7 +18,6 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>interbotix_xs_msgs</exec_depend>
   <depend>fbot_manipulator_msgs</depend>
-  <depend>xarm_msgs</depend>
   <depend>yaml-cpp</depend>
   <depend>moveit_task_constructor_core</depend>
   <depend>moveit_task_constructor_capabilities</depend>

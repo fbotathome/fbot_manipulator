@@ -16,7 +16,6 @@ find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_task_constructor_msgs REQUIRED)
 find_package(fbot_manipulator_msgs REQUIRED)
-find_package(xarm_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
@@ -45,8 +44,7 @@ ament_target_dependencies(manipulator_interface_node
   moveit_task_constructor_msgs
   control_msgs
   trajectory_msgs
-  fbot_manipulator_msgs
-  xarm_msgs
+  fbot_manipulator_msgs  
   yaml-cpp
 )
 
