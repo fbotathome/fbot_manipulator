@@ -44,7 +44,6 @@ class GripperPwmBridge(Node):
         self.declare_parameter('stall_time', 0.3)                 # s below thresh => settled
         self.declare_parameter('timeout', 3.0)                    # s safety cap on a move
         self.declare_parameter('position_tolerance', 0.003)       # m, open-reached tolerance
-        self.declare_parameter('min_drive_time', 0.5)             # s grace before a stall counts (spin-up)
         self.declare_parameter('hold_after_grasp', True)          # keep PWM applied while gripping
 
         g = self.get_parameter
@@ -57,7 +56,6 @@ class GripperPwmBridge(Node):
         self._stall_time = float(g('stall_time').value)
         self._timeout = float(g('timeout').value)
         self._pos_tol = float(g('position_tolerance').value)
-        self._min_drive_time = float(g('min_drive_time').value)
         self._hold_after_grasp = bool(g('hold_after_grasp').value)
 
         # --- state --------------------------------------------------------------
@@ -131,28 +129,17 @@ class GripperPwmBridge(Node):
             f"current {pos:.4f} m, PWM {cmd:.0f}.")
 
         start = time.time()
-        start_pos = pos
         settled_at = None
-        moved = False
         while rclpy.ok():
-            elapsed = time.time() - start
-            if elapsed > self._timeout:
+            if time.time() - start > self._timeout:
                 self.get_logger().warn("Gripper move timed out; treating as settled.")
                 break
             pos, vel = self._state()
-            if pos is not None:
-                # reached the commanded position with nothing in the way
-                if opening and pos >= target - self._pos_tol:
-                    break
-                if closing and pos <= target + self._pos_tol:
-                    break
-                if abs(pos - start_pos) > self._pos_tol:
-                    moved = True
-            # Stall = fingers stopped (object contact / hard stop). Only count it once the
-            # gripper has actually started moving, or after a short grace period -- otherwise
-            # the near-zero velocity during motor spin-up reads as a stall and the move ends
-            # early (the "release only opens a little, press repeatedly" symptom).
-            if (moved or elapsed > self._min_drive_time) and abs(vel) < self._stall_velocity:
+            # opening: done once we reach the commanded opening
+            if opening and pos is not None and pos >= target - self._pos_tol:
+                break
+            # either direction: done once the fingers stop (object contact / hard stop)
+            if abs(vel) < self._stall_velocity:
                 if settled_at is None:
                     settled_at = time.time()
                 elif time.time() - settled_at >= self._stall_time:
