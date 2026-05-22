@@ -95,6 +95,7 @@ void MtcTask::addCollisionObject(const std::string& object_id,
     object.pose = pose;
 
     psi_.applyCollisionObject(object);
+    object_poses_[object_id] = pose;
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Added collision object '%s' at (%.2f, %.2f, %.2f) size (%.2f, %.2f, %.2f)",
                 task_name_.c_str(), object_id.c_str(),
@@ -109,6 +110,7 @@ void MtcTask::removeCollisionObject(const std::string& object_id)
     object.header.frame_id = config_.world_frame;
     object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
     psi_.applyCollisionObject(object);
+    object_poses_.erase(object_id);
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed collision object '%s'",
                 task_name_.c_str(), object_id.c_str());

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <map>
 #include <string>
 #include <memory>
 #include <vector>
@@ -89,6 +90,10 @@ protected:
     std::shared_ptr<mtc::solvers::JointInterpolationPlanner> joint_planner_;
 
     moveit::planning_interface::PlanningSceneInterface psi_;
+
+    // Poses of collision objects added via addCollisionObject(), keyed by id (in world_frame).
+    // Used by the waist-aligned grasp to aim the gripper at the object's azimuth.
+    std::map<std::string, geometry_msgs::msg::Pose> object_poses_;
 
     rclcpp::Logger logger() const { return node_->get_logger(); }
 };

@@ -96,17 +96,23 @@ def launch_setup(context, *args, **kwargs):
     # ---- Kinematics / joint limits / OMPL / controllers (from interbotix_xsarm_moveit) ----
     # interbotix_xsarm_moveit/config/kinematics.yaml is wrapped as `/**: ros__parameters: ...`,
     # so strip that before nesting it under `robot_description_kinematics`.
-    kinematics_yaml = _strip_ros_params_wrapper(
-        _load_yaml(MOVEIT_CONFIG_PKG, 'config', 'kinematics.yaml'))
-    # The X-Series arms (wx200) are 5-DOF: full 6-DOF orientation IK leaves most grasp/Cartesian
-    # poses unreachable, so by default solve for position only (the standard Interbotix workaround).
-    # This affects IK done locally in these nodes (MTC ComputeIK, MoveGroupInterface Cartesian);
-    # to make `move_group`'s pose-goal IK behave the same, set position_only_ik in xsarm_moveit.launch.py too.
+    # Kinematics. The 5-DOF X-Series arms can't reach arbitrary 6-DOF poses, so the motion-primitive
+    # services (move_to_pose / Cartesian) default to position-only IK -- the standard Interbotix
+    # workaround (to make `move_group`'s pose-goal IK match, set position_only_ik in xsarm_moveit too).
+    # The MTC task server is different: its pick uses a *waist-aligned* grasp whose orientation IS
+    # reachable by the 5-DOF arm, so it needs full, orientation-enforcing IK -- position-only IK
+    # would discard that orientation and the Cartesian approach would fail. Hence two kinematics sets.
+    def _kinematics(position_only):
+        kin = _strip_ros_params_wrapper(
+            _load_yaml(MOVEIT_CONFIG_PKG, 'config', 'kinematics.yaml'))
+        for group_cfg in kin.values():
+            if isinstance(group_cfg, dict) and 'kinematics_solver' in group_cfg:
+                group_cfg['position_only_ik'] = position_only
+        return {'robot_description_kinematics': kin}
+
     position_only_ik = LaunchConfiguration('position_only_ik').perform(context).lower() == 'true'
-    for group_cfg in kinematics_yaml.values():
-        if isinstance(group_cfg, dict) and 'kinematics_solver' in group_cfg:
-            group_cfg['position_only_ik'] = position_only_ik
-    robot_description_kinematics = {'robot_description_kinematics': kinematics_yaml}
+    interface_kinematics = _kinematics(position_only_ik)
+    task_server_kinematics = _kinematics(False)
 
     joint_limits_yaml = _load_yaml(
         MOVEIT_CONFIG_PKG, 'config', 'joint_limits', f'{robot_model}_joint_limits.yaml')
@@ -158,7 +164,6 @@ def launch_setup(context, *args, **kwargs):
     moveit_params = [
         robot_description,
         robot_description_semantic,
-        robot_description_kinematics,
         robot_description_planning,
         ompl_planning_pipeline,
         moveit_controllers,
@@ -171,7 +176,7 @@ def launch_setup(context, *args, **kwargs):
         package='fbot_manipulator',
         executable='manipulator_interface_node',
         name='manipulator_interface',
-        parameters=[{'arm_type': FBOT_ARM_TYPE}, *moveit_params],
+        parameters=[{'arm_type': FBOT_ARM_TYPE}, *moveit_params, interface_kinematics],
         output='screen',
     )
 
@@ -182,6 +187,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             PathJoinSubstitution([pkg_share, 'config', FBOT_ARM_TYPE, 'mtc_config.yaml']),
             *moveit_params,
+            task_server_kinematics,
         ],
         output='screen',
     )
