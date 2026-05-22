@@ -42,9 +42,9 @@ class GripperPwmBridge(Node):
         self.declare_parameter('open_is_positive', True)          # +pwm opens (fbot_behavior)
         self.declare_parameter('stall_velocity', 0.002)           # m/s ~ fingers stopped
         self.declare_parameter('stall_time', 0.3)                 # s below thresh => settled
-        self.declare_parameter('min_run_time', 0.4)               # s spin-up grace before stall counts
         self.declare_parameter('timeout', 3.0)                    # s safety cap on a move
-        self.declare_parameter('position_tolerance', 0.003)       # m, target-reached tolerance
+        self.declare_parameter('position_tolerance', 0.003)       # m, open-reached tolerance
+        self.declare_parameter('min_drive_time', 0.5)             # s grace before a stall counts (spin-up)
         self.declare_parameter('hold_after_grasp', True)          # keep PWM applied while gripping
 
         g = self.get_parameter
@@ -55,9 +55,9 @@ class GripperPwmBridge(Node):
         self._open_is_positive = bool(g('open_is_positive').value)
         self._stall_velocity = float(g('stall_velocity').value)
         self._stall_time = float(g('stall_time').value)
-        self._min_run_time = float(g('min_run_time').value)
         self._timeout = float(g('timeout').value)
         self._pos_tol = float(g('position_tolerance').value)
+        self._min_drive_time = float(g('min_drive_time').value)
         self._hold_after_grasp = bool(g('hold_after_grasp').value)
 
         # --- state --------------------------------------------------------------
@@ -131,33 +131,34 @@ class GripperPwmBridge(Node):
             f"current {pos:.4f} m, PWM {cmd:.0f}.")
 
         start = time.time()
+        start_pos = pos
         settled_at = None
-        moving_seen = False
+        moved = False
         while rclpy.ok():
-            now = time.time()
-            if now - start > self._timeout:
+            elapsed = time.time() - start
+            if elapsed > self._timeout:
                 self.get_logger().warn("Gripper move timed out; treating as settled.")
                 break
             pos, vel = self._state()
-            # reached the commanded position (the normal stop for an unobstructed move)
             if pos is not None:
+                # reached the commanded position with nothing in the way
                 if opening and pos >= target - self._pos_tol:
                     break
                 if closing and pos <= target + self._pos_tol:
                     break
-            # Stall-based stop applies to CLOSING only (grip on an object, or the closed
-            # limit). OPENING always runs to the target position (or the timeout): velocity
-            # dips while opening -- stick-slip, slow travel, a noisy encoder -- must NOT cut
-            # it short, which was the "creeps open one press at a time" bug.
-            if closing:
-                if abs(vel) >= self._stall_velocity:
-                    moving_seen = True
-                    settled_at = None
-                elif moving_seen and now - start >= self._min_run_time:
-                    if settled_at is None:
-                        settled_at = now
-                    elif now - settled_at >= self._stall_time:
-                        break
+                if abs(pos - start_pos) > self._pos_tol:
+                    moved = True
+            # Stall = fingers stopped (object contact / hard stop). Only count it once the
+            # gripper has actually started moving, or after a short grace period -- otherwise
+            # the near-zero velocity during motor spin-up reads as a stall and the move ends
+            # early (the "release only opens a little, press repeatedly" symptom).
+            if (moved or elapsed > self._min_drive_time) and abs(vel) < self._stall_velocity:
+                if settled_at is None:
+                    settled_at = time.time()
+                elif time.time() - settled_at >= self._stall_time:
+                    break
+            else:
+                settled_at = None
             fb = GripperCommand.Feedback()
             fb.position = pos if pos is not None else target
             fb.effort = cmd
