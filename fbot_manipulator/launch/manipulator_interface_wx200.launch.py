@@ -76,6 +76,7 @@ def launch_setup(context, *args, **kwargs):
 
     # Resolved to a plain string -- needed to build per-model file paths below.
     robot_model = LaunchConfiguration('robot_model').perform(context)
+    robot_name = LaunchConfiguration('robot_name').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     # ---- Robot description (URDF) and semantic description (SRDF) ----------------
@@ -185,7 +186,21 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
-    return [manipulator_interface_node, manipulation_task_server]
+    # Drives the XL430 gripper in PWM mode in response to MoveIt/MTC GripperCommand goals
+    # (the MoveIt controllers YAML maps the gripper to type: GripperCommand on this action).
+    gripper_pwm_bridge = Node(
+        package='fbot_manipulator',
+        executable='gripper_pwm_bridge',
+        name='gripper_pwm_bridge',
+        parameters=[{
+            'robot_name': robot_name,
+            'pwm': 350.0,
+            'use_sim_time': use_sim_time,
+        }],
+        output='screen',
+    )
+
+    return [manipulator_interface_node, manipulation_task_server, gripper_pwm_bridge]
 
 
 def generate_launch_description():

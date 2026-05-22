@@ -77,6 +77,12 @@ install(TARGETS
   manipulation_task_server
   DESTINATION lib/${PROJECT_NAME})
 
+# Python node: GripperCommand -> PWM bridge for the XL430 gripper.
+install(PROGRAMS
+  src/gripper_pwm_bridge.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME gripper_pwm_bridge)
+
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 
