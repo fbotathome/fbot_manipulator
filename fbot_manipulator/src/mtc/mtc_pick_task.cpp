@@ -28,12 +28,10 @@ bool MtcPickTask::buildTask()
     }
 
     // ---- Open Gripper ----
-    mtc::Stage* open_gripper = nullptr;
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("open gripper", joint_planner_);
         stage->setGroup(config_.hand_group_name);
         stage->setGoal(config_.hand_open_state);
-        open_gripper = stage.get();
         task_.add(std::move(stage));
     }
 
@@ -57,6 +55,21 @@ bool MtcPickTask::buildTask()
     if (waist_aligned) {
         RCLCPP_INFO(logger(), "[MtcTask:pick] %zu-DOF arm: waist-aligned grasp, azimuth=%.1f deg",
                     arm_dof, grasp_theta * 180.0 / M_PI);
+    }
+
+    // The grasp is generated from (and the approach is checked against) this stage's scene.
+    // For the waist-aligned grasp we allow the object<->robot collisions here so BOTH the grasp IK
+    // and the collision-checked approach tolerate the expected gripper/arm<->object contact -- the
+    // Interbotix gripper_bar_link mesh wraps the finger region, so an object held between the
+    // fingers always overlaps it. Scoped to the robot's links only, so object<->table (world) and
+    // object<->other-object collisions stay checked. (setIgnoreCollisions on ComputeIK alone would
+    // not help the approach stage, which runs its own collision check from the grasp state.)
+    mtc::Stage* grasp_monitor = current_state;
+    if (waist_aligned) {
+        auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow object-robot collisions");
+        stage->allowCollisions(object_id_, task_.getRobotModel()->getLinkModelNames(), true);
+        grasp_monitor = stage.get();
+        task_.add(std::move(stage));
     }
 
     // ---- Move to Pick (Connect) ----
@@ -127,8 +140,8 @@ bool MtcPickTask::buildTask()
                 auto stage = std::make_unique<mtc::stages::GeneratePose>("generate grasp pose");
                 stage->properties().set("marker_ns", "grasp_pose");
                 stage->setPose(target);
-                // Monitor the open-gripper stage so the grasp's collision check uses open fingers.
-                stage->setMonitoredStage(open_gripper);
+                // Monitor the allow-collision stage (open gripper + object collisions allowed).
+                stage->setMonitoredStage(grasp_monitor);
                 generator = std::move(stage);
             } else {
                 auto stage = std::make_unique<mtc::stages::GenerateGraspPose>("generate grasp pose");
@@ -137,7 +150,7 @@ bool MtcPickTask::buildTask()
                 stage->setPreGraspPose(config_.hand_open_state);
                 stage->setObject(object_id_);
                 stage->setAngleDelta(config_.grasp_angle_delta);
-                stage->setMonitoredStage(current_state);
+                stage->setMonitoredStage(grasp_monitor);
                 generator = std::move(stage);
             }
 
