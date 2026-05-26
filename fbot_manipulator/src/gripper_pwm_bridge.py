@@ -131,42 +131,37 @@ class GripperPwmBridge(Node):
             f"current {pos:.4f} m, PWM {cmd:.0f}.")
 
         start = time.time()
-        settled_at = None          # closing: velocity-stall timer (unchanged from working version)
-        best_pos = pos             # opening: most-open position reached so far
-        last_progress = start      # opening: last time we advanced toward the target
+        best_pos = pos             # most-advanced position toward the target reached so far
+        last_progress = start      # last time the fingers advanced toward the target
         while rclpy.ok():
             if time.time() - start > self._timeout:
                 self.get_logger().warn("Gripper move timed out; treating as settled.")
                 break
-            pos, vel = self._state()
+            pos, _ = self._state()
 
-            if opening:
-                # Drive open until we reach the commanded position or stop advancing. The
-                # gripper's reported velocity is unreliable (reads ~0 mid-motion), so judge
-                # by POSITION PROGRESS, not velocity -- otherwise the open ends during spin-up.
-                if pos is not None:
-                    if pos >= target - self._pos_tol:
-                        break
-                    if pos > best_pos + self._progress_eps:
-                        best_pos = pos
-                        last_progress = time.time()
-                    elif time.time() - last_progress >= self._stall_time:
-                        break  # reached the open limit short of target
-            else:
-                # Closing: stop when the fingers stop moving (object contact / fully closed).
-                # Unchanged from the working version; the -350 PWM is held afterwards.
-                if abs(vel) < self._stall_velocity:
-                    if settled_at is None:
-                        settled_at = time.time()
-                    elif time.time() - settled_at >= self._stall_time:
-                        break
-                else:
-                    settled_at = None
+            # Judge progress by POSITION, not velocity: the gripper's reported velocity reads ~0
+            # mid-motion, so a velocity stall test "settles" during spin-up and ends the move before
+            # the fingers have actually closed on the object -- which is what made the lift start
+            # early. Opening advances toward a larger position; closing toward a smaller one. We stop
+            # when the commanded opening is reached, or when the fingers stop advancing (open limit,
+            # or for a close: object contact / fully closed); the -350 PWM is then held to keep grip.
+            if pos is not None:
+                reached = (pos >= target - self._pos_tol) if opening \
+                    else (pos <= target + self._pos_tol)
+                advanced = (pos > best_pos + self._progress_eps) if opening \
+                    else (pos < best_pos - self._progress_eps)
+                if reached:
+                    break
+                if advanced:
+                    best_pos = pos
+                    last_progress = time.time()
+                elif time.time() - last_progress >= self._stall_time:
+                    break
 
             fb = GripperCommand.Feedback()
             fb.position = pos if pos is not None else target
             fb.effort = cmd
-            fb.stalled = settled_at is not None
+            fb.stalled = (time.time() - last_progress) >= self._stall_time
             fb.reached_goal = False
             goal_handle.publish_feedback(fb)
             time.sleep(0.02)
