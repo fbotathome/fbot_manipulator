@@ -4,13 +4,13 @@ manipulation_task_server:
       arm_group_name: "interbotix_arm"
       hand_group_name: "interbotix_gripper"
       hand_frame: "wx200/ee_gripper_link"   # Interbotix prefixes link names with <robot_name>; default robot_name is "wx200"
-      world_frame: "world"
-      surface_link: "world"
+      world_frame: "wx200/base_link"
+      surface_link: "map"
       # SRDF named group states (from the Interbotix SRDF, e.g. wx200.srdf.xacro)
       hand_open_state: "Released"
       hand_closed_state: "Grasping"
       arm_home_state: "Sleep"      # final resting pose
-      arm_ready_state: "Home"      # pose held after a successful pick
+      arm_ready_state: "Sleep"      # pose held after a successful pick
       approach_min: 0.05
       approach_max: 0.15
       lift_min: 0.05
