@@ -87,25 +87,15 @@ ament_target_dependencies(add_object_collision
   tf2_ros
   tf2_geometry_msgs
 )
-add_executable(shelf_collision src/collision/shelf_collision.cpp)
-ament_target_dependencies(shelf_collision
-  rclcpp
-  moveit_ros_planning_interface
-  moveit_msgs
-  shape_msgs
-  geometry_msgs
-)
 install(TARGETS
   manipulator_interface_node
   manipulation_task_server
   add_object_collision
-  shelf_collision
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
-install(DIRECTORY src/mesh DESTINATION share/${PROJECT_NAME})
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
