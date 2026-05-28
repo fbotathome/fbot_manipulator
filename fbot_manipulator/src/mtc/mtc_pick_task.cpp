@@ -79,7 +79,7 @@ bool MtcPickTask::buildTask()
             mtc::stages::Connect::GroupPlannerVector{
                 { config_.arm_group_name, pipeline_planner_ }
             });
-        stage->setTimeout(3.0);
+        stage->setTimeout(1.5);
         stage->properties().configureInitFrom(mtc::Stage::PARENT);
         task_.add(std::move(stage));
     }

@@ -18,3 +18,8 @@ manipulation_task_server:
       # Rotation [roll, pitch, yaw] from hand_frame to the grasp IK frame (IK-frame X = approach).
       # link_tcp is Z-forward, so rotate Z -> X here. This matches the built-in default.
       grasp_frame_rpy: [0.0, -1.5707963, 3.1415927]
+      pour_angle_delta: 1.72 #98.54 Degrees
+      pour_side_offset: 0.10
+      pour_above_offset: 0.15
+      #TODO ADD NEW GRASP ANGLE FOR MILK AND CEREAL
+      pour_wait_time: 2.0

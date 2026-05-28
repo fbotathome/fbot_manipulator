@@ -49,6 +49,10 @@ struct MtcConfig
     // [roll, pitch, yaw] of the grasp IK frame relative to hand_frame. Defaults reproduce
     // the xArm6/link_tcp transform; the Interbotix ee_gripper_link uses [0, 0, 0].
     std::vector<double> grasp_frame_rpy{0.0, -M_PI / 2, M_PI};
+    double pour_angle_delta = M_PI / 2;
+    double pour_side_offset = 0.10;
+    double pour_above_offset = 0.15;
+    double pour_wait_time = 5.0;
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
 };
 
