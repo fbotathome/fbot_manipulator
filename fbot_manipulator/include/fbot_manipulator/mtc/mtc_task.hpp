@@ -43,7 +43,7 @@ struct MtcConfig
     double pour_above_offset = 0.15;
     double pour_wait_time = 5.0;
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
-    double support_height = 0.01; // thin support collision placed below the object
+    double support_height = 0.01;
 };
 
 class MtcTask
