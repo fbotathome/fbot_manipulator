@@ -1,5 +1,7 @@
 import os
+import sys
 import re
+import yaml
 
 import rclpy
 from ament_index_python.packages import get_package_share_directory
@@ -7,23 +9,65 @@ from rclpy.node import Node
 from rclpy.wait_for_message import wait_for_message
 
 from xarm.wrapper import XArmAPI
-
+from interbotix_xs_msgs.srv import TorqueEnable
 from sensor_msgs.msg import JointState
+from collections import OrderedDict
 
-class SaveArmPose(Node):
-    def __init__(self):
+
+class OrderedDumper(yaml.SafeDumper):
+    '''
+    @brief Custom YAML dumper to handle OrderedDict.
+    '''
+    def representOrderedDictionary(self, data):
+        return self.represent_dict(data.items())
+    
+
+class OrderedLoader(yaml.SafeLoader):
+    pass
+
+
+def ConstructorOrderedDictionary(loader, node):
+    '''
+    @brief Constructor to OrderDictionary
+    '''
+    return OrderedDict(loader.construct_pairs(node))
+
+
+OrderedLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    ConstructorOrderedDictionary
+)
+
+
+class SaveXarmPose(Node):
+    def __init__(self, robot_type='xarm'):
         """@brief Initialize ROS interfaces and default target xacro path."""
         super().__init__("save_arm_pose")
+        self.robot_type = robot_type
         workspace_src_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "../../../../")
         )
-        default_xacro_path = os.path.join(
-            workspace_src_dir,
-            "xarm_ros2",
-            "xarm_moveit_config",
-            "srdf",
-            "_xarm6_macro.srdf.xacro",
-        )
+        
+        if robot_type == 'xarm':
+            default_xacro_path = os.path.join(
+                workspace_src_dir,
+                "xarm_ros2",
+                "xarm_moveit_config",
+                "srdf",
+                "_xarm6_macro.srdf.xacro",
+            )
+            self.group_name = "${prefix}xarm6"
+            self.default_arm_joint_order = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
+        else:  # wx200
+            default_xacro_path = os.path.join(
+                workspace_src_dir,
+                "xarm_ros2",
+                "xarm_moveit_config",
+                "srdf",
+                "_xarm6_macro.srdf.xacro",
+            )
+            self.group_name = "${prefix}wx200"
+            self.default_arm_joint_order = ["joint1", "joint2", "joint3", "joint4", "joint5"]
 
         self.declare_parameter(
             "xacro_path",
@@ -34,12 +78,8 @@ class SaveArmPose(Node):
         self.subscription_ = self.create_subscription(JointState, "/joint_states", self.joint_state_callback, 10)
         self.save_loop_started = False
         self.done_saving = False
-
-        self.group_name = "${prefix}xarm6"
-        self.default_arm_joint_order = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
-        self.arm_joint_order = self.loadArmJointOrder()
         
-
+        self.arm_joint_order = self.loadArmJointOrder()
 
     def set_arm_mode(self, mode):
         """@brief Set the physical xArm control mode and ready state."""
@@ -221,14 +261,161 @@ class SaveArmPose(Node):
             return False
 
         return True
-       
+    
 
-       
+class SaveWx200Pose(SaveXarmPose):
+    def __init__(self):
+        """@brief Initialize WX200 pose saver with YAML-based storage."""
+        super().__init__(robot_type='wx200')
+        self.client = self.create_client(TorqueEnable, '/wx200/torque_enable')
+        while not self.client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().warning('Service not found')
+
+        self.initializeRequisitions()
+        
+        workspace_src_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../../../")
+        )
+        self.yaml_path = os.path.join(
+            workspace_src_dir,
+            "src",
+            "fbot_manipulator",
+            "fbot_manipulator",
+            "config",
+            "xarm6",
+            "manipulator_config.yaml"
+        )
+        
+        while True:
+            check_sleep = input("The torque will be disabled. The Arm is in the sleep pose? (y/n): ").lower()            
+            if check_sleep == 'n':
+                continue
+            elif check_sleep == 'y':
+                self.get_logger().warning('Disabling the torque')
+                self.torqueControl(self.req_disabled)
+                break
+            else:
+                self.get_logger().warning("Invalid input. Please enter 'y' or 'n'. ")
+        
+    def initializeRequisitions(self):
+        '''
+        @brief Initializes the service requests for enabling and disabling torque.
+        @return: None
+        '''
+        self.req_disabled = TorqueEnable.Request()
+        self.req_disabled.cmd_type = 'group'
+        self.req_disabled.name = 'all'
+        self.req_disabled.enable = False
+        self.req_enabled = TorqueEnable.Request()
+        self.req_enabled.cmd_type = 'group'
+        self.req_enabled.name = 'all'
+        self.req_enabled.enable = True
+
+    def torqueControl(self, data):
+        '''
+        @brief Sends a request to enable or disable the arm torque.
+        @param data: self.req_disable(Disable arm torque) self.req_enabled(Enable arm torque)
+        @return: Returns the client call
+        '''
+        return self.client.call_async(data)
+    
+    def savePose(self) -> None:
+        '''
+        @brief This method waits for a message on the '/wx200/joint_states' topic, retrieves the joint names and positions, and allows the user to name the pose. The pose is then saved in a YAML file. The method will keep asking for poses until the user decides to stop saving. The torque is disabled before saving poses and enabled after saving is complete.
+        @return: None
+        '''
+        keys_to_remove = {'gripper', 'left_finger', 'right_finger'}
+        keep_saving = True
+        while rclpy.ok():
+            arm_name = input("Move the arm to the desired pose and enter its name (e.g., 'home', 'pickup'): ")
+            if not arm_name:
+                self.get_logger().warning("No name provided, skipping pose.")
+                continue
+                
+            success, message = wait_for_message(msg_type=JointState, node=self, topic='/wx200/joint_states', time_to_wait=2)
+            if not success:
+                self.get_logger().warning("No pose received from topic yet.")
+                continue
+                
+            joints = message.name
+            values = message.position
+            self.joints_values = tuple(zip(joints, values))
+            filtered_joints_values = [value for key, value in self.joints_values if key not in keys_to_remove]
+            self.get_logger().info(f"Received pose with {len(filtered_joints_values)} joints: {filtered_joints_values}")
+
+            if self.writeToYaml(arm_name, filtered_joints_values):
+                self.get_logger().info(f"Pose '{arm_name}' saved to {self.yaml_path}")
+
+            save_more = input("Do you want to add more poses? (y/n): ").lower()
+            if save_more == 'n':
+                keep_saving = False
+                self.get_logger().warning('Enabling the torque')
+                self.get_logger().info("Pose saving complete. Shutting down node.")
+                self.torqueControl(self.req_enabled)
+                return               
+            elif save_more != 'y':
+                self.get_logger().warning("Invalid input. Please enter 'y' or 'n'.")
+
+
+    def writeToYaml(self, pose_name, joint_values):
+        ''' 
+        @brief Writes the saved pose to the manipulator_config.yaml file in the poses section.
+        @param pose_name: The name of the pose
+        @param joint_values: List of joint values
+        @return: True if successful, False otherwise
+        '''
+        try:
+            if os.path.exists(self.yaml_path):
+                with open(self.yaml_path, 'r') as yaml_file:
+                    try:
+                        data = yaml.load(yaml_file, Loader=OrderedLoader) or OrderedDict()
+                    except yaml.YAMLError as e:
+                        self.get_logger().error(f"Error reading {self.yaml_path}: {e}")
+                        return False
+            else:
+                self.get_logger().error(f"{self.yaml_path} does not exist.")
+                return False
+
+            if 'poses' not in data:
+                data['poses'] = OrderedDict()
+
+            data['poses'][pose_name] = list(joint_values)
+            
+            OrderedDumper.add_representer(OrderedDict, OrderedDumper.representOrderedDictionary)
+            OrderedDumper.add_representer(list, lambda dumper, data: dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True))
+            
+            with open(self.yaml_path, 'w') as yaml_file:
+                yaml.dump(data, yaml_file, default_flow_style=False, Dumper=OrderedDumper)
+            
+            return True
+        except Exception as e:
+            self.get_logger().error(f"Error writing pose to YAML: {e}")
+            return False
+
+
 def main(args=None):
-    """@brief Initialize ROS and run the SaveArmPose node lifecycle."""
+    """@brief Initialize ROS and run the appropriate pose saver based on sys.argv."""
+    if len(sys.argv) > 1:
+        robot_type = sys.argv[1].lower()
+        if robot_type not in ['xarm', 'wx200']:
+            print("Usage: save_arm_pose.py [xarm|wx200]")
+            print("  xarm  - Save poses for xArm robot (SRDF/xacro format)")
+            print("  wx200 - Save poses for WX200 robot (YAML format)")
+            sys.exit(1)
+    else:
+        print("Usage: save_arm_pose.py [xarm|wx200]")
+        print("  xarm  - Save poses for xArm robot (SRDF/xacro format)")
+        print("  wx200 - Save poses for WX200 robot (YAML format)")
+        sys.exit(1)
+    
     rclpy.init(args=args)
-    node = SaveArmPose()
+    
     try:
+        if robot_type == 'wx200':
+            node = SaveWx200Pose()
+        else:  # xarm
+            node = SaveXarmPose(robot_type='xarm')
+        
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
@@ -236,5 +423,7 @@ def main(args=None):
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+
+
 if __name__ == "__main__":
     main()
