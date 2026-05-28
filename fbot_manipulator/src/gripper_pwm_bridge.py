@@ -38,7 +38,7 @@ class GripperPwmBridge(Node):
         self.declare_parameter('robot_name', 'wx200')
         self.declare_parameter('gripper_motor_name', 'gripper')   # xs_sdk 'single' name
         self.declare_parameter('finger_joint', 'left_finger')     # joint in /joint_states
-        self.declare_parameter('pwm', 350.0)                      # grip duty magnitude
+        self.declare_parameter('pwm', 450.0)                      # grip duty magnitude
         self.declare_parameter('open_is_positive', True)          # +pwm opens (fbot_behavior)
         self.declare_parameter('stall_velocity', 0.002)           # m/s ~ fingers stopped
         self.declare_parameter('stall_time', 0.3)                 # s below thresh => settled

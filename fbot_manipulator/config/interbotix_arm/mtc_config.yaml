@@ -19,8 +19,7 @@ manipulation_task_server:
       retreat_max: 0.25
       max_solutions: 2
       grasp_angle_delta: 0.262
-      grasp_offset: -0.01           # along the approach axis (negative = grasp deeper toward the arm)
+      grasp_offset: -0.07           # along the approach axis (negative = grasp deeper toward the arm)
       # Rotation [roll, pitch, yaw] from hand_frame to the grasp IK frame (IK-frame X = approach).
       # The Interbotix ee_gripper_link is already X-forward, so no rotation is needed.
-      # If grasps come out pointing the wrong way, try [0.0, 0.0, 3.14159].
       grasp_frame_rpy: [0.0, 0.0, 0.0]

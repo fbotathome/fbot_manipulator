@@ -200,7 +200,7 @@ def launch_setup(context, *args, **kwargs):
         name='gripper_pwm_bridge',
         parameters=[{
             'robot_name': robot_name,
-            'pwm': 350.0,
+            'pwm': 450.0,
             'use_sim_time': use_sim_time,
         }],
         output='screen',
