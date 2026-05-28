@@ -12,13 +12,24 @@
   <depend>rclcpp_action</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>control_msgs</depend>
+
+  <!-- gripper_pwm_bridge.py (GripperCommand -> PWM bridge for the XL430 gripper) -->
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>interbotix_xs_msgs</exec_depend>
   <depend>fbot_manipulator_msgs</depend>
-  <depend>xarm_msgs</depend>
   <depend>yaml-cpp</depend>
   <depend>moveit_task_constructor_core</depend>
   <depend>moveit_task_constructor_capabilities</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
+
+  <!-- Runtime-only: used by manipulator_interface_wx200.launch.py to build the
+       URDF/SRDF and to read the Interbotix MoveIt config (kinematics / OMPL /
+       joint limits / controllers). Needed for the wx200 launch path. -->
+  <exec_depend>interbotix_xs_modules</exec_depend>
+  <exec_depend>interbotix_xsarm_moveit</exec_depend>
+  <exec_depend>interbotix_xsarm_descriptions</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

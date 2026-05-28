@@ -91,23 +91,25 @@ private:
             mtc_task = std::make_shared<MtcPickTask>(shared_from_this(), object_id);
             break;
         case ManipulationTaskAction::Goal::PLACE:
-            if (!goal->place_pose_name.empty())
-            {
-                mtc_task = std::make_shared<MtcPlaceTask>(shared_from_this(), object_id, goal->place_pose_name);
-            }
-            else
+            // Prefer the geometric place when a pose is provided; place_pose_name then acts as
+            // the fallback (tried only if the geometric place fails to plan, see below).
+            if (hasGeometricPose(goal->place_pose))
             {
                 mtc_task = std::make_shared<MtcPlaceTask>(shared_from_this(), object_id, goal->place_pose);
             }
+            else
+            {
+                mtc_task = std::make_shared<MtcPlaceTask>(shared_from_this(), object_id, goal->place_pose_name);
+            }
             break;
         case ManipulationTaskAction::Goal::PICK_AND_PLACE:
-            if (!goal->place_pose_name.empty())
+            if (hasGeometricPose(goal->place_pose))
             {
-                mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), object_id, goal->place_pose_name);
+                mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), object_id, goal->place_pose);
             }
             else
             {
-                mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), object_id, goal->place_pose);
+                mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), object_id, goal->place_pose_name);
             }
             break;
         case ManipulationTaskAction::Goal::POUR:
@@ -150,12 +152,40 @@ private:
         publishFeedback(goal_handle, "Planning", 0.3);
         if (!mtc_task->plan())
         {
-            mtc_task->removeCollisionObject(object_id);
-            result->success = false;
-            result->message = "Planning failed";
-            goal_handle->abort(result);
-            executing_ = false;
-            return;
+            // Geometric place unreachable: fall back to the recorded place_pose_name (if any).
+            // Only meaningful when the primary attempt used a geometric place pose.
+            const bool can_fallback =
+                (goal->task_type == ManipulationTaskAction::Goal::PLACE ||
+                 goal->task_type == ManipulationTaskAction::Goal::PICK_AND_PLACE) &&
+                hasGeometricPose(goal->place_pose) && !goal->place_pose_name.empty();
+
+            bool recovered = false;
+            if (can_fallback)
+            {
+                RCLCPP_WARN(get_logger(), "Geometric place unreachable; falling back to '%s'",
+                            goal->place_pose_name.c_str());
+                publishFeedback(goal_handle, "Planning (fallback pose)", 0.3);
+
+                // Build a fresh named-pose task. Do NOT re-add the collision object: it is already
+                // in the planning scene (and for PLACE it is attached to the gripper), so the
+                // fallback task's CurrentState picks up the live state.
+                auto fallback = buildFallbackTask(goal, object_id);
+                if (fallback && fallback->buildTask() && fallback->plan())
+                {
+                    mtc_task = fallback;
+                    recovered = true;
+                }
+            }
+
+            if (!recovered)
+            {
+                mtc_task->removeCollisionObject(object_id);
+                result->success = false;
+                result->message = can_fallback ? "Planning failed (including fallback)" : "Planning failed";
+                goal_handle->abort(result);
+                executing_ = false;
+                return;
+            }
         }
 
         if (goal_handle->is_canceling())
@@ -186,6 +216,29 @@ private:
         goal_handle->succeed(result);
 
         executing_ = false;
+    }
+
+    // An unset geometry_msgs/Pose has an all-zero (invalid) quaternion; a real pose does not.
+    // Used to tell whether the goal carries a geometric place pose vs. only a named state.
+    static bool hasGeometricPose(const geometry_msgs::msg::Pose& p)
+    {
+        return !(p.orientation.x == 0.0 && p.orientation.y == 0.0 &&
+                 p.orientation.z == 0.0 && p.orientation.w == 0.0);
+    }
+
+    // Build the named-pose place variant used as a fallback when the geometric place can't plan.
+    MtcTask::Ptr buildFallbackTask(const std::shared_ptr<const ManipulationTaskAction::Goal>& goal,
+                                   const std::string& object_id)
+    {
+        switch (goal->task_type)
+        {
+        case ManipulationTaskAction::Goal::PLACE:
+            return std::make_shared<MtcPlaceTask>(shared_from_this(), object_id, goal->place_pose_name);
+        case ManipulationTaskAction::Goal::PICK_AND_PLACE:
+            return std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), object_id, goal->place_pose_name);
+        default:
+            return nullptr;
+        }
     }
 
     rclcpp_action::Server<ManipulationTaskAction>::SharedPtr action_server_;

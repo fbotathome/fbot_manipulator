@@ -1,7 +1,10 @@
 #pragma once
 
+#include <cmath>
+#include <map>
 #include <string>
 #include <memory>
+#include <vector>
 
 #include <rclcpp/rclcpp.hpp>
 #include <moveit/task_constructor/task.h>
@@ -29,6 +32,12 @@ struct MtcConfig
     std::string hand_frame = "link_tcp";
     std::string world_frame = "world";
     std::string surface_link = "world";
+    // SRDF named group states (differ between robots; e.g. the Interbotix SRDF uses
+    // "Released"/"Grasping" for the gripper and "Home"/"Upright" for the arm).
+    std::string hand_open_state = "open";
+    std::string hand_closed_state = "close";
+    std::string arm_home_state = "home";
+    std::string arm_ready_state = "hold-up";  // pose held after a successful pick
     double approach_min = 0.05;
     double approach_max = 0.15;
     double lift_min = 0.08;
@@ -37,6 +46,9 @@ struct MtcConfig
     double retreat_max = 0.15;
     int max_solutions = 5;
     double grasp_angle_delta = M_PI / 4;
+    // [roll, pitch, yaw] of the grasp IK frame relative to hand_frame. Defaults reproduce
+    // the xArm6/link_tcp transform; the Interbotix ee_gripper_link uses [0, 0, 0].
+    std::vector<double> grasp_frame_rpy{0.0, -M_PI / 2, M_PI};
     double pour_angle_delta = M_PI / 2;
     double pour_side_offset = 0.10;
     double pour_above_offset = 0.15;
@@ -82,6 +94,10 @@ protected:
     std::shared_ptr<mtc::solvers::JointInterpolationPlanner> joint_planner_;
 
     moveit::planning_interface::PlanningSceneInterface psi_;
+
+    // Poses of collision objects added via addCollisionObject(), keyed by id (in world_frame).
+    // Used by the waist-aligned grasp to aim the gripper at the object's azimuth.
+    std::map<std::string, geometry_msgs::msg::Pose> object_poses_;
 
     rclcpp::Logger logger() const { return node_->get_logger(); }
 };
