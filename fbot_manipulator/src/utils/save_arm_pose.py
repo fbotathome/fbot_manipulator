@@ -282,7 +282,7 @@ class SaveWx200Pose(SaveXarmPose):
             "fbot_manipulator",
             "fbot_manipulator",
             "config",
-            "xarm6",
+            "interbotix_arm",
             "manipulator_config.yaml"
         )
         
