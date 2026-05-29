@@ -10,10 +10,9 @@
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
-
+#include <moveit_msgs/msg/planning_scene.hpp>
 #if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp>)
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <moveit_msgs/msg/planning_scene.hpp>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #endif
@@ -97,7 +96,7 @@ protected:
     geometry_msgs::msg::Vector3 object_size_;
     bool has_surface_info_ = false;
 
-    rclcpp::Logger logger() const { return node_->get_logger(); };
+    rclcpp::Logger logger() const { return node_->get_logger(); }
 };
 
 } // namespace fbot_manipulator

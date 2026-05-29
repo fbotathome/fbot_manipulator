@@ -113,10 +113,8 @@ private:
         case ManipulationTaskAction::Goal::POUR:
             mtc_task = std::make_shared<MtcPourTask>(shared_from_this(), object_id, goal->object_pose);
             break;
-        case ManipulationTaskAction::Goal::POUR:
-            mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), object_id, goal->place_pose);
-            break;
-        default:
+
+            default:
             result->success = false;
             result->message = "Unsupported task type: " + std::to_string(goal->task_type);
             goal_handle->abort(result);
