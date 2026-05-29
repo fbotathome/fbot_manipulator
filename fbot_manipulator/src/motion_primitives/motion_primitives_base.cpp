@@ -48,17 +48,36 @@ void MotionPrimitivesBase::load_config()
 
 void MotionPrimitivesBase::init_action_clients()
 {
-    std::string action_suffix;
+    std::string gripper_action_name;
     try {
-        action_suffix = manipulator_config_["moveit_controllers"]["gripper_traj"].as<std::string>();
+        YAML::Node controllers = manipulator_config_["moveit_controllers"];
+
+        // Prefer an explicit, full action name when the gripper does not follow
+        // the conventional /<gripper_traj>/gripper_action layout. The wx200, for
+        // example, is driven in PWM mode by gripper_pwm_bridge, which serves a
+        // GripperCommand action at /<robot>/gripper_pwm_bridge/gripper_cmd.
+        if (controllers["gripper_action"]) {
+            gripper_action_name = controllers["gripper_action"].as<std::string>();
+        } else {
+            std::string action_suffix = controllers["gripper_traj"].as<std::string>();
+            gripper_action_name = "/" + action_suffix + "/gripper_action";
+        }
+
+        // max_effort sent with every gripper goal. For the wx200 PWM bridge this
+        // is the PWM magnitude (0.0 => the bridge uses its own 'pwm' default).
+        if (controllers["gripper_max_effort"]) {
+            gripper_max_effort_ = controllers["gripper_max_effort"].as<double>();
+        }
     } catch (const std::exception& e) {
         RCLCPP_ERROR(node_->get_logger(),
-                     "[MotionPrimitivesBase] Failed to read gripper action name from YAML: %s",
+                     "[MotionPrimitivesBase] Failed to read gripper config from YAML: %s",
                      e.what());
         throw;
     }
 
-    std::string gripper_action_name = "/" + action_suffix + "/gripper_action";
+    RCLCPP_INFO(node_->get_logger(),
+                "[MotionPrimitivesBase] Gripper action '%s' (max_effort=%.1f)",
+                gripper_action_name.c_str(), gripper_max_effort_);
 
     gripper_action_client_ =
         rclcpp_action::create_client<control_msgs::action::GripperCommand>(
@@ -88,7 +107,7 @@ bool MotionPrimitivesBase::setGripperPosition(double position)
     control_msgs::action::GripperCommand::Goal goal_msg;
     control_msgs::msg::GripperCommand command;
     command.position = position;
-    command.max_effort = 50.0;
+    command.max_effort = gripper_max_effort_;
     goal_msg.command = command;
 
     auto send_goal_options =

@@ -80,6 +80,7 @@ protected:
     bool is_trajectory_;
 
     rclcpp_action::Client<control_msgs::action::GripperCommand>::SharedPtr gripper_action_client_;
+    double gripper_max_effort_ = 50.0;
 };
 
 } // namespace fbot_manipulator

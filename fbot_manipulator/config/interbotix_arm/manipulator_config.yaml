@@ -1,6 +1,8 @@
 moveit_controllers:
   traj: arm_controller
   gripper_traj: gripper_controller
+  gripper_action: /wx200/gripper_pwm_bridge/gripper_cmd
+  gripper_max_effort: 0.0
 
 joints:
   arm_joints:
