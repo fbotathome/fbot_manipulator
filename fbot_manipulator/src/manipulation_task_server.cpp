@@ -123,12 +123,21 @@ private:
             return;
         }
 
-        mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
+        // For PLACE the object is already attached to the gripper by the preceding pick.
+        // Re-adding it as a world object with the same name creates a duplicate body that
+        // collides with the attached one ("eef in collision: <id> - <id>") and breaks the
+        // later detach/remove. Only add for tasks that introduce a not-yet-attached object.
+        const bool object_already_attached =
+            (goal->task_type == ManipulationTaskAction::Goal::PLACE);
+        if (!object_already_attached)
+        {
+            mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
+        }
 
         // Check cancellation
         if (goal_handle->is_canceling())
         {
-            mtc_task->removeCollisionObject(object_id);
+            if (!object_already_attached) mtc_task->removeCollisionObject(object_id);
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -140,7 +149,7 @@ private:
         publishFeedback(goal_handle, "Building task", 0.1);
         if (!mtc_task->buildTask())
         {
-            mtc_task->removeCollisionObject(object_id);
+            if (!object_already_attached) mtc_task->removeCollisionObject(object_id);
             result->success = false;
             result->message = "Failed to build task";
             goal_handle->abort(result);
@@ -179,7 +188,7 @@ private:
 
             if (!recovered)
             {
-                mtc_task->removeCollisionObject(object_id);
+                if (!object_already_attached) mtc_task->removeCollisionObject(object_id);
                 result->success = false;
                 result->message = can_fallback ? "Planning failed (including fallback)" : "Planning failed";
                 goal_handle->abort(result);
@@ -190,7 +199,7 @@ private:
 
         if (goal_handle->is_canceling())
         {
-            mtc_task->removeCollisionObject(object_id);
+            if (!object_already_attached) mtc_task->removeCollisionObject(object_id);
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -218,12 +227,20 @@ private:
         executing_ = false;
     }
 
-    // An unset geometry_msgs/Pose has an all-zero (invalid) quaternion; a real pose does not.
-    // Used to tell whether the goal carries a geometric place pose vs. only a named state.
+    // Tells whether the goal carries a real geometric place pose vs. only a named state.
+    // A default-constructed geometry_msgs/Pose is the origin with the rosidl default
+    // *identity* quaternion (0,0,0,1) -- NOT an all-zero quaternion. So a goal that only
+    // sets place_pose_name still arrives with place_pose = identity-at-origin. Treat both
+    // that and an all-zero quaternion as "no geometric pose"; a genuine place pose has a
+    // non-zero position (or a non-trivial orientation).
     static bool hasGeometricPose(const geometry_msgs::msg::Pose& p)
     {
-        return !(p.orientation.x == 0.0 && p.orientation.y == 0.0 &&
-                 p.orientation.z == 0.0 && p.orientation.w == 0.0);
+        const bool at_origin =
+            (p.position.x == 0.0 && p.position.y == 0.0 && p.position.z == 0.0);
+        const bool trivial_orientation =
+            (p.orientation.x == 0.0 && p.orientation.y == 0.0 && p.orientation.z == 0.0 &&
+             (p.orientation.w == 0.0 || p.orientation.w == 1.0));
+        return !(at_origin && trivial_orientation);
     }
 
     // Build the named-pose place variant used as a fallback when the geometric place can't plan.
