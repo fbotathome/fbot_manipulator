@@ -267,19 +267,54 @@ bool MtcPickAndPlaceTask::buildTask()
 
             // Generate Place Pose + IK
             {
-                auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate place pose");
-                stage->properties().configureInitFrom(mtc::Stage::PARENT);
-                stage->properties().set("marker_ns", "place_pose");
-                stage->setObject(object_id_);
+                // A <6-DOF arm (e.g. the 5-DOF WidowX 200) cannot achieve an arbitrary place
+                // orientation, and a place pose saved in the world frame is only reachable from the
+                // base pose it was recorded at -- once the robot drives elsewhere, the recorded
+                // orientation re-projected into the arm frame usually falls outside the arm's narrow
+                // feasible cone and "place pose IK" finds no solution. So we ignore the recorded
+                // orientation and recompute a reachable one in the *live* arm frame, mirroring the
+                // waist-aligned grasp above: drive the gripper to a single level pose whose yaw
+                // points straight out from the base (azimuth = atan2(y, x) of the place point),
+                // which the arm CAN reach because the target's azimuth and the gripper yaw are the
+                // same angle. The grasp_frame_transform IK frame keeps the held object at the place
+                // point. 6-DOF+ arms keep the object-centric GeneratePlacePose so the recorded
+                // orientation is honoured.
+                std::unique_ptr<mtc::Stage> generator;
+                if (waist_aligned) {
+                    const double place_theta =
+                        std::atan2(place_pose_.position.y, place_pose_.position.x);
+                    RCLCPP_INFO(logger(), "[MtcTask:pick_and_place] %zu-DOF arm: waist-aligned place, azimuth=%.1f deg",
+                                arm_dof, place_theta * 180.0 / M_PI);
 
-                geometry_msgs::msg::PoseStamped target;
-                target.header.frame_id = config_.world_frame;
-                target.pose = place_pose_;
-                stage->setPose(target);
-                stage->setMonitoredStage(attach_object_stage);
+                    geometry_msgs::msg::PoseStamped target;
+                    target.header.frame_id = config_.world_frame;
+                    target.pose.position = place_pose_.position;
+                    target.pose.orientation.x = 0.0;
+                    target.pose.orientation.y = 0.0;
+                    target.pose.orientation.z = std::sin(place_theta / 2.0);
+                    target.pose.orientation.w = std::cos(place_theta / 2.0);
 
-                auto wrapper = std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(stage));
-                wrapper->setMaxIKSolutions(2);
+                    auto stage = std::make_unique<mtc::stages::GeneratePose>("generate place pose");
+                    stage->properties().set("marker_ns", "place_pose");
+                    stage->setPose(target);
+                    stage->setMonitoredStage(attach_object_stage);
+                    generator = std::move(stage);
+                } else {
+                    auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate place pose");
+                    stage->properties().configureInitFrom(mtc::Stage::PARENT);
+                    stage->properties().set("marker_ns", "place_pose");
+                    stage->setObject(object_id_);
+
+                    geometry_msgs::msg::PoseStamped target;
+                    target.header.frame_id = config_.world_frame;
+                    target.pose = place_pose_;
+                    stage->setPose(target);
+                    stage->setMonitoredStage(attach_object_stage);
+                    generator = std::move(stage);
+                }
+
+                auto wrapper = std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(generator));
+                wrapper->setMaxIKSolutions(waist_aligned ? 8 : 2);
                 wrapper->setMinSolutionDistance(0.1);
                 wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
                 wrapper->setTimeout(1.5);
