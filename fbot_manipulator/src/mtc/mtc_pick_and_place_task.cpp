@@ -364,6 +364,18 @@ bool MtcPickAndPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
+            // Remove collision object
+            {
+                // Drop the placed object from the planning scene after retreating from it (the
+                // retreat above still checks against it). The scene lives in world_frame =
+                // wx200/base_link, a robot-fixed frame, so a left-behind object would freeze at its
+                // base-relative release pose and, once the robot drives elsewhere, collide with
+                // unrelated objects detected on a later pick. The named-pose branch removes it too.
+                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("remove object");
+                stage->removeObject(object_id_);
+                container->insert(std::move(stage));
+            }
+
             task_.add(std::move(container));
         }
     }
