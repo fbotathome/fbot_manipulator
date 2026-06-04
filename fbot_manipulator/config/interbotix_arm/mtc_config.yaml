@@ -11,15 +11,15 @@ manipulation_task_server:
       hand_closed_state: "Grasping"
       arm_home_state: "Sleep"      # final resting pose
       arm_ready_state: "Sleep"      # pose held after a successful pick
-      approach_min: 0.05
+      approach_min: 0.03
       approach_max: 0.15
       lift_min: 0.01
       lift_max: 0.15
-      retreat_min: 0.05
+      retreat_min: 0.03
       retreat_max: 0.25
       max_solutions: 2
       grasp_angle_delta: 0.262
-      grasp_offset: 0.07           # along the approach axis (negative = grasp deeper toward the arm)
+      grasp_offset: 0.055          # along the approach axis (negative = grasp deeper toward the arm)
       # Rotation [roll, pitch, yaw] from hand_frame to the grasp IK frame (IK-frame X = approach).
       # The Interbotix ee_gripper_link is already X-forward, so no rotation is needed.
       grasp_frame_rpy: [0.0, 0.0, 0.0]
@@ -27,4 +27,4 @@ manipulation_task_server:
       grasp_check:
         enabled: true
         closed_position: 0.022    # finger position when fully closed (empty)
-        min_gap: 0.005            # min opening above closed_position to count as "holding"
+        min_gap: 0.001            # min opening above closed_position to count as "holding"
