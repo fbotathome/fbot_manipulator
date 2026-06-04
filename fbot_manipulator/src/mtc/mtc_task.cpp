@@ -1,6 +1,8 @@
 #include "fbot_manipulator/mtc/mtc_task.hpp"
 #include <chrono>
 
+#include <moveit_msgs/msg/attached_collision_object.hpp>
+
 namespace fbot_manipulator
 {
 
@@ -119,6 +121,21 @@ void MtcTask::removeCollisionObject(const std::string& object_id)
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed collision object '%s'",
                 task_name_.c_str(), object_id.c_str());
+}
+
+void MtcTask::detachAndRemoveObject(const std::string& object_id)
+{
+    // First detach from the gripper: an attached body cannot be deleted by a plain world
+    // CollisionObject REMOVE. Applying an AttachedCollisionObject REMOVE returns it to the
+    // world at its current pose...
+    moveit_msgs::msg::AttachedCollisionObject detach;
+    detach.link_name = config_.hand_frame;
+    detach.object.id = object_id;
+    detach.object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+    psi_.applyAttachedCollisionObject(detach);
+
+    // ...then delete it from the world so it cannot haunt later planning.
+    removeCollisionObject(object_id);
 }
 
 bool MtcTask::plan()

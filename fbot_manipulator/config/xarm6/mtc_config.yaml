@@ -23,3 +23,9 @@ manipulation_task_server:
       pour_above_offset: 0.15
       #TODO ADD NEW GRASP ANGLE FOR MILK AND CEREAL
       pour_wait_time: 2.0
+      # Post-pick grasp verification thresholds. TODO(xarm6): set real values; the check is
+      # disabled for xarm6 in the server until its finger joint/topic are configured.
+      grasp_check:
+        enabled: false
+        closed_position: 0.0      # finger position when fully closed (empty)
+        min_gap: 0.0              # min opening above closed_position to count as "holding"
