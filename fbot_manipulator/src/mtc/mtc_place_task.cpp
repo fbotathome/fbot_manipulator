@@ -164,22 +164,11 @@ bool MtcPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
-            // Forbid hand-object collision
-            {
-                // Re-enable hand<->object collision only after the retreat has physically pulled
-                // the fingers clear of the placed object. The explicit allowance from the pick
-                // ("allow collision (hand,object)") survives detachObject, so the retreat above
-                // can still slide out past a bottle-width object the narrow wx200 gripper cannot
-                // clear by opening alone. Doing this before the retreat made the stage fail with
-                // 'left/right_finger_link colliding with <object>'.
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_,
-                                       task_.getRobotModel()
-                                           ->getJointModelGroup(config_.hand_group_name)
-                                           ->getLinkModelNamesWithCollisionGeometry(),
-                                       false);
-                container->insert(std::move(stage));
-            }
+            // No "forbid collision (hand,object)" stage here on purpose: re-enabling the
+            // hand<->object collision would fail because the wx200 gripper opens only ~1.5 cm and
+            // cannot clear a bottle-width object, so the fingers still touch it. The allowance is
+            // moot anyway -- "remove object" below deletes the object (and its ACM entries) right
+            // after, so there is nothing left to collide with.
 
             // Remove collision object
             {
@@ -214,16 +203,9 @@ bool MtcPlaceTask::buildTask()
             task_.add(std::move(stage));
         }
 
-        // Forbid hand-object collision
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-            stage->allowCollisions(object_id_,
-                                   task_.getRobotModel()
-                                       ->getJointModelGroup(config_.hand_group_name)
-                                       ->getLinkModelNamesWithCollisionGeometry(),
-                                   false);
-            task_.add(std::move(stage));
-        }
+        // No "forbid collision (hand,object)" stage on purpose -- see the geometric branch above:
+        // it cannot pass with the narrow wx200 gripper and "remove object" drops the object (and
+        // its ACM entries) right after, so restoring the collision matrix is unnecessary.
 
         // Detach object
         {

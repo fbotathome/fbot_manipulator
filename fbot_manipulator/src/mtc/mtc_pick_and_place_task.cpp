@@ -331,16 +331,10 @@ bool MtcPickAndPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
-            // Forbid hand-object collision
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_,
-                                       task_.getRobotModel()
-                                           ->getJointModelGroup(config_.hand_group_name)
-                                           ->getLinkModelNamesWithCollisionGeometry(),
-                                       false);
-                container->insert(std::move(stage));
-            }
+            // No "forbid collision (hand,object)" stage on purpose: re-enabling the hand<->object
+            // collision fails because the wx200 gripper opens only ~1.5 cm and cannot clear a
+            // bottle-width object, so the fingers still touch it. "remove object" below deletes the
+            // object (and its ACM entries) right after, so restoring the collision matrix is moot.
 
             // Detach object
             {
@@ -397,16 +391,9 @@ bool MtcPickAndPlaceTask::buildTask()
             task_.add(std::move(stage));
         }
 
-        // Forbid hand-object collision
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-            stage->allowCollisions(object_id_,
-                                   task_.getRobotModel()
-                                       ->getJointModelGroup(config_.hand_group_name)
-                                       ->getLinkModelNamesWithCollisionGeometry(),
-                                   false);
-            task_.add(std::move(stage));
-        }
+        // No "forbid collision (hand,object)" stage on purpose -- see the geometric branch above:
+        // it cannot pass with the narrow wx200 gripper and "remove object" drops the object (and
+        // its ACM entries) right after, so restoring the collision matrix is unnecessary.
 
         // Detach object
         {
