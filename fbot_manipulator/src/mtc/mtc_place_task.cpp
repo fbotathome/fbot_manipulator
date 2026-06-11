@@ -140,17 +140,6 @@ bool MtcPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
-            // Forbid hand-object collision
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_,
-                                       task_.getRobotModel()
-                                           ->getJointModelGroup(config_.hand_group_name)
-                                           ->getLinkModelNamesWithCollisionGeometry(),
-                                       false);
-                container->insert(std::move(stage));
-            }
-
             // Detach object
             {
                 auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
@@ -170,6 +159,23 @@ bool MtcPlaceTask::buildTask()
                 vec.header.frame_id = config_.world_frame;
                 vec.vector.z = 1.0;
                 stage->setDirection(vec);
+                container->insert(std::move(stage));
+            }
+
+            // Forbid hand-object collision
+            {
+                // Re-enable hand<->object collision only after the retreat has physically pulled
+                // the fingers clear of the placed object. The explicit allowance from the pick
+                // ("allow collision (hand,object)") survives detachObject, so the retreat above
+                // can still slide out past a bottle-width object the narrow wx200 gripper cannot
+                // clear by opening alone. Doing this before the retreat made the stage fail with
+                // 'left/right_finger_link colliding with <object>'.
+                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
+                stage->allowCollisions(object_id_,
+                                       task_.getRobotModel()
+                                           ->getJointModelGroup(config_.hand_group_name)
+                                           ->getLinkModelNamesWithCollisionGeometry(),
+                                       false);
                 container->insert(std::move(stage));
             }
 
