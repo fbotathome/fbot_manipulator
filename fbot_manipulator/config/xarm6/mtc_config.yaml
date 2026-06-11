@@ -10,6 +10,8 @@ manipulation_task_server:
       approach_max: 0.15
       lift_min: 0.05
       lift_max: 0.15
+      place_lower_min: 0.05      # match lift: preserve xarm6's prior place-descent clearance
+      place_lower_max: 0.15
       retreat_min: 0.05
       retreat_max: 0.25
       max_solutions: 2

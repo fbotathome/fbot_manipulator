@@ -15,6 +15,8 @@ manipulation_task_server:
       approach_max: 0.15
       lift_min: 0.01
       lift_max: 0.15
+      place_lower_min: 0.02      # place "lower" descent above the place point (smaller for shelves)
+      place_lower_max: 0.06
       retreat_min: 0.03
       retreat_max: 0.25
       max_solutions: 2

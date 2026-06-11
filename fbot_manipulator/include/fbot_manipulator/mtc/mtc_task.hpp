@@ -42,6 +42,11 @@ struct MtcConfig
     double approach_max = 0.15;
     double lift_min = 0.08;
     double lift_max = 0.15;
+    // Descent above the place point for the place "lower" stage. Kept smaller than the pick lift
+    // so the gripper does not back off so high before setting the object down -- important on a
+    // shelf, where a tall pre-place clearance hits the shelf above or leaves the pose unreachable.
+    double place_lower_min = 0.02;
+    double place_lower_max = 0.06;
     double retreat_min = 0.08;
     double retreat_max = 0.15;
     int max_solutions = 5;

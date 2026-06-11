@@ -30,6 +30,8 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.approach_max", config_.approach_max, config_.approach_max);
     node_->get_parameter_or("mtc.lift_min", config_.lift_min, config_.lift_min);
     node_->get_parameter_or("mtc.lift_max", config_.lift_max, config_.lift_max);
+    node_->get_parameter_or("mtc.place_lower_min", config_.place_lower_min, config_.place_lower_min);
+    node_->get_parameter_or("mtc.place_lower_max", config_.place_lower_max, config_.place_lower_max);
     node_->get_parameter_or("mtc.retreat_min", config_.retreat_min, config_.retreat_min);
     node_->get_parameter_or("mtc.retreat_max", config_.retreat_max, config_.retreat_max);
     node_->get_parameter_or("mtc.max_solutions", config_.max_solutions, config_.max_solutions);

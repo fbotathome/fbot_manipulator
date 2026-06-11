@@ -64,7 +64,9 @@ bool MtcPlaceTask::buildTask()
                 stage->properties().set("marker_ns", "lower");
                 stage->properties().set("link", config_.hand_frame);
                 stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-                stage->setMinMaxDistance(config_.lift_min, config_.lift_max);
+                // Dedicated, smaller descent than the pick lift so the pre-place does not sit so
+                // high above the place point -- on a shelf a tall clearance hits the shelf above.
+                stage->setMinMaxDistance(config_.place_lower_min, config_.place_lower_max);
 
                 geometry_msgs::msg::Vector3Stamped vec;
                 vec.header.frame_id = config_.world_frame;
