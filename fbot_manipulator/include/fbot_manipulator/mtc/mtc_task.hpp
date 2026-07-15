@@ -69,7 +69,7 @@ public:
     
     void createTopSupportSurface(const std::string& object_id);
 
-
+    void removeTopSupportSurface(const std::string& object_id);
     void removeSupportSurface(const std::string& object_id);
 
     virtual bool buildTask() = 0;

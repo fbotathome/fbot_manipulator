@@ -230,6 +230,24 @@ void MtcTask::createTopSupportSurface(const std::string& object_id)
                support_pose_top.position.x, support_pose_top.position.y, support_pose_top.position.z);
 }
 
+
+void MtcTask::removeTopSupportSurface(const std::string& object_id) {
+    if(!has_surface_info_){
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj_top;
+    support_obj_top.id = object_id + "_support_top";
+    support_obj_top.header.frame_id = config_.world_frame;
+    support_obj_top.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+
+    psi_.applyCollisionObject(support_obj_top);
+
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Removed support surface '%s_support'",
+                task_name_.c_str(), object_id.c_str());
+
+}
+
 void MtcTask::removeSupportSurface(const std::string& object_id)
 {
     if (!has_surface_info_)
