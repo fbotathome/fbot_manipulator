@@ -190,6 +190,46 @@ void MtcTask::createSupportSurface(const std::string& object_id)
                support_pose.position.x, support_pose.position.y, support_pose.position.z);
 }
 
+void MtcTask::createTopSupportSurface(const std::string& object_id)
+{
+    if (!has_surface_info_)
+    {
+        RCLCPP_WARN(logger(), "[MtcTask:%s] No surface info provided, skipping support surface",
+                    task_name_.c_str());
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj_top;
+    support_obj_top.id = object_id + "_support_top";
+    support_obj_top.header.frame_id = config_.world_frame;
+
+    shape_msgs::msg::SolidPrimitive primitive_top;
+    primitive_top.type = shape_msgs::msg::SolidPrimitive::BOX;
+    primitive_top.dimensions.resize(3);
+    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = object_size_.x + 0.2;
+    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.7;
+    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = 0.01;
+
+    geometry_msgs::msg::Pose support_pose_top;
+    support_pose_top.position.x = object_pose_.position.x + 0.06;
+    support_pose_top.position.y = object_pose_.position.y;
+    support_pose_top.position.z = object_pose_.position.z + (object_size_.z / 2.0) + 0.2;
+    support_pose_top.orientation.x = 0.0;
+    support_pose_top.orientation.y = 0.0;
+    support_pose_top.orientation.z = 0.0;
+    support_pose_top.orientation.w = 1.0;
+    support_obj_top.primitives.push_back(primitive_top);
+    support_obj_top.primitive_poses.push_back(support_pose_top);
+    support_obj_top.operation = moveit_msgs::msg::CollisionObject::ADD;
+
+    psi_.applyCollisionObject(support_obj_top);
+
+    RCLCPP_INFO(logger(),
+               "[MtcTask:%s] Added support top surface for '%s' at (%.2f, %.2f, %.2f)",
+               task_name_.c_str(), object_id.c_str(),
+               support_pose_top.position.x, support_pose_top.position.y, support_pose_top.position.z);
+}
+
 void MtcTask::removeSupportSurface(const std::string& object_id)
 {
     if (!has_surface_info_)

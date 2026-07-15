@@ -14,6 +14,7 @@ bool MtcPickTask::buildTask()
 {
     // Create support surface if we have surface info
     createSupportSurface(object_id_);
+    createTopSupportSurface(object_id_);
 
     task_.stages()->setName("pick_" + object_id_);
     task_.loadRobotModel(node_);

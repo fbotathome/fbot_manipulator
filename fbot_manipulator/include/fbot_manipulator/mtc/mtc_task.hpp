@@ -66,6 +66,9 @@ public:
                         const geometry_msgs::msg::Vector3& size);
 
     void createSupportSurface(const std::string& object_id);
+    
+    void createTopSupportSurface(const std::string& object_id);
+
 
     void removeSupportSurface(const std::string& object_id);
 
