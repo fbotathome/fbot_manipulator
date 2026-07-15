@@ -161,7 +161,7 @@ bool MtcPickTask::buildTask()
 
             geometry_msgs::msg::Vector3Stamped vec;
             vec.header.frame_id = config_.hand_frame;
-            vec.vector.z = 1.0;
+            vec.vector.z = -1.0;
             stage->setDirection(vec);
             container->insert(std::move(stage));
         }
