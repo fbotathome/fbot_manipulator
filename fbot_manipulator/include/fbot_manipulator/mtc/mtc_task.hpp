@@ -65,12 +65,16 @@ public:
     void setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
                         const geometry_msgs::msg::Vector3& size);
 
+
+    // Functions to add the collision surfaces
     void createSupportSurface(const std::string& object_id);
     
     void createTopSupportSurface(const std::string& object_id);
 
     void removeTopSupportSurface(const std::string& object_id);
+
     void removeSupportSurface(const std::string& object_id);
+    
 
     virtual bool buildTask() = 0;
 
