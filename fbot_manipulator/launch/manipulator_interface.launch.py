@@ -35,9 +35,16 @@ def generate_launch_description():
         description="Namespace for the manipulator interface node",
     )
 
+    enable_surfaces_arg = DeclareLaunchArgument(
+        name="enable_surfaces",
+        default_value="true",
+        description="Enable collision surfaces around objects",
+    )
+
     # Get launch configurations
     arm_type = LaunchConfiguration("arm_type")
     namespace = LaunchConfiguration("namespace")
+    enable_surfaces = LaunchConfiguration("enable_surfaces")
 
     # Create the manipulator interface node
     manipulator_interface_node = Node(
@@ -137,6 +144,7 @@ def generate_launch_description():
         name="manipulation_task_server",
         parameters=[
             mtc_config,
+            {"mtc.enable_surfaces": enable_surfaces},
             {"robot_description_kinematics": kinematics_yaml},
             {"robot_description_planning": joint_limits_yaml},
             ompl_planning_pipeline_config,
@@ -150,6 +158,7 @@ def generate_launch_description():
     return LaunchDescription([
         arm_type_arg,
         namespace_arg,
+        enable_surfaces_arg,
         manipulator_interface_node,
         manipulation_task_server,
     ])
