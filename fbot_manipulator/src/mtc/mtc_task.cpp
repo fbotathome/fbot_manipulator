@@ -42,6 +42,7 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.grasp_offset", grasp_offset, 0.0);
 
     node_->get_parameter_or("mtc.support_height", config_.support_height, config_.support_height);
+    node_->get_parameter_or("mtc.enable_surfaces", config_.enable_surfaces, config_.enable_surfaces);
 
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
     // First translate along Z (which becomes the approach direction after rotation)
@@ -152,6 +153,8 @@ void MtcTask::setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
 
 void MtcTask::createSupportSurface(const std::string& object_id)
 {
+    if (!config_.enable_surfaces) return;
+
     if (!has_surface_info_)
     {
         RCLCPP_WARN(logger(), "[MtcTask:%s] No surface info provided, skipping support surface",
@@ -192,6 +195,8 @@ void MtcTask::createSupportSurface(const std::string& object_id)
 
 void MtcTask::createTopSupportSurface(const std::string& object_id)
 {
+    if (!config_.enable_surfaces) return;
+
     if (!has_surface_info_)
     {
         RCLCPP_WARN(logger(), "[MtcTask:%s] No surface info provided, skipping support surface",
@@ -232,6 +237,8 @@ void MtcTask::createTopSupportSurface(const std::string& object_id)
 
 
 void MtcTask::removeTopSupportSurface(const std::string& object_id) {
+    if (!config_.enable_surfaces) return;
+
     if(!has_surface_info_){
         return;
     }
@@ -250,6 +257,8 @@ void MtcTask::removeTopSupportSurface(const std::string& object_id) {
 
 void MtcTask::removeSupportSurface(const std::string& object_id)
 {
+    if (!config_.enable_surfaces) return;
+
     if (!has_surface_info_)
     {
         return;
