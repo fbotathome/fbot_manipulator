@@ -41,7 +41,6 @@ add_executable(manipulator_interface_node
   src/utils.cpp
 )
 
-
 ament_target_dependencies(manipulator_interface_node
   rclcpp
   moveit_ros_planning_interface
@@ -77,7 +76,25 @@ ament_target_dependencies(manipulation_task_server
   fbot_manipulator_msgs
 )
 
+add_executable(add_object_collision src/collision/add_object_collision.cpp)
+ament_target_dependencies(add_object_collision
+  rclcpp
+  visualization_msgs
+  geometry_msgs
+  moveit_msgs
+  shape_msgs
+  tf2_ros
+  tf2_geometry_msgs
+)
+install(TARGETS
+  manipulator_interface_node
+  manipulation_task_server
+  add_object_collision
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 
 ament_package()
+
