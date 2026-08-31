@@ -12,6 +12,10 @@ MtcPickTask::MtcPickTask(rclcpp::Node::SharedPtr node,
 
 bool MtcPickTask::buildTask()
 {
+    // Create support surface if we have surface info
+    createSupportSurface(object_id_);
+    createTopSupportSurface(object_id_);
+
     task_.stages()->setName("pick_" + object_id_);
     task_.loadRobotModel(node_);
 
@@ -55,6 +59,15 @@ bool MtcPickTask::buildTask()
 
         // Approach
         {
+            // Allow collision with object during approach
+            auto allow_collision = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision during approach");
+            allow_collision->allowCollisions(object_id_,
+                                             task_.getRobotModel()
+                                                 ->getJointModelGroup(config_.arm_group_name)
+                                                 ->getLinkModelNamesWithCollisionGeometry(),
+                                             true);
+            container->insert(std::move(allow_collision));
+
             auto stage = std::make_unique<mtc::stages::MoveRelative>("approach object", cartesian_planner_);
             stage->properties().set("marker_ns", "approach");
             stage->properties().set("link", config_.hand_frame);
@@ -133,6 +146,22 @@ bool MtcPickTask::buildTask()
             geometry_msgs::msg::Vector3Stamped vec;
             vec.header.frame_id = config_.world_frame;
             vec.vector.z = 1.0;
+            stage->setDirection(vec);
+            container->insert(std::move(stage));
+        }
+
+        // Move backwards after lifting the object
+        {
+            auto stage = std::make_unique<mtc::stages::MoveRelative>("move backwards", cartesian_planner_);
+            stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
+            stage->setMinMaxDistance(config_.retreat_min, config_.retreat_max);
+            stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
+            stage->properties().set("marker_ns", "retreat");
+            stage->properties().set("link", config_.hand_frame);
+
+            geometry_msgs::msg::Vector3Stamped vec;
+            vec.header.frame_id = config_.hand_frame;
+            vec.vector.z = -1.0;
             stage->setDirection(vec);
             container->insert(std::move(stage));
         }

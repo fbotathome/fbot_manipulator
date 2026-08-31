@@ -10,7 +10,7 @@
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
-
+#include <moveit_msgs/msg/planning_scene.hpp>
 #if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp>)
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #else
@@ -42,6 +42,8 @@ struct MtcConfig
     double pour_above_offset = 0.15;
     double pour_wait_time = 5.0;
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
+    double support_height = 0.01;
+    bool enable_surfaces = true;
 };
 
 class MtcTask
@@ -60,6 +62,20 @@ public:
                             const geometry_msgs::msg::Vector3& size);
 
     void removeCollisionObject(const std::string& object_id);
+
+    void setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
+                        const geometry_msgs::msg::Vector3& size);
+
+
+    // Functions to add the collision surfaces
+    void createSupportSurface(const std::string& object_id);
+    
+    void createTopSupportSurface(const std::string& object_id);
+
+    void removeTopSupportSurface(const std::string& object_id);
+
+    void removeSupportSurface(const std::string& object_id);
+    
 
     virtual bool buildTask() = 0;
 
@@ -82,6 +98,11 @@ protected:
     std::shared_ptr<mtc::solvers::JointInterpolationPlanner> joint_planner_;
 
     moveit::planning_interface::PlanningSceneInterface psi_;
+    rclcpp::Publisher<moveit_msgs::msg::PlanningScene>::SharedPtr planning_scene_pub_;
+
+    geometry_msgs::msg::Pose object_pose_;
+    geometry_msgs::msg::Vector3 object_size_;
+    bool has_surface_info_ = false;
 
     rclcpp::Logger logger() const { return node_->get_logger(); }
 };

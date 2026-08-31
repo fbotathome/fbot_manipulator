@@ -21,6 +21,11 @@ find_package(rclcpp_action REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(moveit_msgs REQUIRED)
+find_package(shape_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 find_package(sensor_msgs REQUIRED)
 
@@ -35,7 +40,6 @@ add_executable(manipulator_interface_node
   src/motion_primitives/motion_primitives_xarm.cpp
   src/utils.cpp
 )
-
 
 ament_target_dependencies(manipulator_interface_node
   rclcpp
@@ -75,13 +79,11 @@ ament_target_dependencies(manipulation_task_server
 install(TARGETS
   manipulator_interface_node
   manipulation_task_server
-  DESTINATION lib/${PROJECT_NAME})
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
-
 ament_package()
+

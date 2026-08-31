@@ -197,7 +197,17 @@ sudo apt-get install ros-humble-moveit-core ros-humble-moveit-ros-planning ros-h
 colcon build --packages-select fbot_manipulator_msgs fbot_manipulator
 ```
 
-### Launch
+### Launch with collision surfaces
+
+```bash
+# 1. Launch MoveIt with MTC support (xArm example)
+ros2 launch xarm_moveit_config xarm6_moveit_fake.launch.py add_gripper:=true add_mtc:=true
+
+# 2. Launch fbot_manipulator nodes (in a new terminal)
+ros2 launch fbot_manipulator manipulator_interface.launch.py arm_type:=xarm6 enable_surfaces:=true
+```
+
+### Launch without collision surfaces
 
 ```bash
 # 1. Launch MoveIt with MTC support (xArm example)

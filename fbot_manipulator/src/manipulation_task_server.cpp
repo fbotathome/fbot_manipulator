@@ -113,7 +113,8 @@ private:
         case ManipulationTaskAction::Goal::POUR:
             mtc_task = std::make_shared<MtcPourTask>(shared_from_this(), object_id, goal->object_pose);
             break;
-        default:
+
+            default:
             result->success = false;
             result->message = "Unsupported task type: " + std::to_string(goal->task_type);
             goal_handle->abort(result);
@@ -121,12 +122,14 @@ private:
             return;
         }
 
+        mtc_task->setSurfaceInfo(goal->object_pose, goal->object_size);
         mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
 
         // Check cancellation
         if (goal_handle->is_canceling())
         {
             mtc_task->removeCollisionObject(object_id);
+            mtc_task->removeSupportSurface(object_id);
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -139,6 +142,7 @@ private:
         if (!mtc_task->buildTask())
         {
             mtc_task->removeCollisionObject(object_id);
+            mtc_task->removeSupportSurface(object_id);
             result->success = false;
             result->message = "Failed to build task";
             goal_handle->abort(result);
@@ -151,6 +155,7 @@ private:
         if (!mtc_task->plan())
         {
             mtc_task->removeCollisionObject(object_id);
+            mtc_task->removeSupportSurface(object_id);
             result->success = false;
             result->message = "Planning failed";
             goal_handle->abort(result);
@@ -161,6 +166,7 @@ private:
         if (goal_handle->is_canceling())
         {
             mtc_task->removeCollisionObject(object_id);
+            mtc_task->removeSupportSurface(object_id);
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -172,6 +178,8 @@ private:
         publishFeedback(goal_handle, "Executing", 0.5);
         if (!mtc_task->execute())
         {
+            mtc_task->removeCollisionObject(object_id);
+            mtc_task->removeSupportSurface(object_id);
             result->success = false;
             result->message = "Execution failed";
             goal_handle->abort(result);
@@ -181,6 +189,8 @@ private:
 
         // Success
         publishFeedback(goal_handle, "Done", 1.0);
+        mtc_task->removeCollisionObject(object_id);
+        mtc_task->removeSupportSurface(object_id);
         result->success = true;
         result->message = "Task completed successfully";
         goal_handle->succeed(result);
