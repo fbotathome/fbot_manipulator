@@ -11,7 +11,7 @@ manipulation_task_server:
       lift_min: 0.05
       lift_max: 0.15
       retreat_min: 0.05
-      retreat_max: 0.25
+      retreat_max: 0.10
       max_solutions: 5
       grasp_angle_delta: 0.262
       pour_angle_delta: 2.095 # 120 degrees in radians
