@@ -130,6 +130,7 @@ private:
         {
             mtc_task->removeCollisionObject(object_id);
             mtc_task->removeSupportSurface(object_id);
+            mtc_task->removeTopSupportSurface(object_id);
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -143,6 +144,7 @@ private:
         {
             mtc_task->removeCollisionObject(object_id);
             mtc_task->removeSupportSurface(object_id);
+            mtc_task->removeTopSupportSurface(object_id);
             result->success = false;
             result->message = "Failed to build task";
             goal_handle->abort(result);
@@ -156,6 +158,7 @@ private:
         {
             mtc_task->removeCollisionObject(object_id);
             mtc_task->removeSupportSurface(object_id);
+            mtc_task->removeTopSupportSurface(object_id);
             result->success = false;
             result->message = "Planning failed";
             goal_handle->abort(result);
@@ -167,6 +170,7 @@ private:
         {
             mtc_task->removeCollisionObject(object_id);
             mtc_task->removeSupportSurface(object_id);
+            mtc_task->removeTopSupportSurface(object_id);
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -180,6 +184,7 @@ private:
         {
             mtc_task->removeCollisionObject(object_id);
             mtc_task->removeSupportSurface(object_id);
+            mtc_task->removeTopSupportSurface(object_id);
             result->success = false;
             result->message = "Execution failed";
             goal_handle->abort(result);
@@ -191,6 +196,7 @@ private:
         publishFeedback(goal_handle, "Done", 1.0);
         mtc_task->removeCollisionObject(object_id);
         mtc_task->removeSupportSurface(object_id);
+        mtc_task->removeTopSupportSurface(object_id);
         result->success = true;
         result->message = "Task completed successfully";
         goal_handle->succeed(result);
