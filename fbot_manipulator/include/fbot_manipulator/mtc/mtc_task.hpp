@@ -67,7 +67,7 @@ public:
                         const geometry_msgs::msg::Vector3& size);
 
 
-    // Functions to add the collision surfaces
+    // Functions to add and remove the collision surfaces
     void createSupportSurface(const std::string& object_id);
     
     void createTopSupportSurface(const std::string& object_id);

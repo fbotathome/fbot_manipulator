@@ -250,7 +250,7 @@ void MtcTask::removeTopSupportSurface(const std::string& object_id) {
 
     psi_.applyCollisionObject(support_obj_top);
 
-    RCLCPP_INFO(logger(), "[MtcTask:%s] Removed support surface '%s_support'",
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Removed support surface '%s_support_top'",
                 task_name_.c_str(), object_id.c_str());
 
 }
