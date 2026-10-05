@@ -235,6 +235,88 @@ void MtcTask::createTopSupportSurface(const std::string& object_id)
                support_pose_top.position.x, support_pose_top.position.y, support_pose_top.position.z);
 }
 
+void MtcTask::createRightSupportSurface(const std::string& object_id) {
+    if(!config_.enable_surfaces) return;
+    if(!has_surface_info_) {
+        RCLCPP_WARN(logger(), "[MtcTask:%s] No surface info provided, skipping right support surface",
+                    task_name_.c_str());
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj_right;
+    support_obj_right.id = object_id + "_support_right";
+    support_obj_right.header.frame_id = config_.world_frame;
+    support_obj_right.operation = moveit_msgs::msg::CollisionObject::ADD;
+
+    shape_msgs::msg::SolidPrimitive primitive_right;
+    primitive_right.type = shape_msgs::msg::SolidPrimitive::BOX;
+    primitive_right.dimensions.resize(3);
+    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = 0.01;
+    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.3;
+    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = object_size_.z + 0.2;
+
+    geometry_msgs::msg::Pose support_pose_right;
+    support_pose_right.position.x = object_pose_.position.x + (object_size_.x / 2.0) + 0.01;
+    support_pose_right.position.y = object_pose_.position.y + 0.2;
+    support_pose_right.position.z = object_pose_.position.z + 0.10;
+    support_pose_right.orientation.x = 0.0;
+    support_pose_right.orientation.y = 0.0;
+    support_pose_right.orientation.z = 0.70710678;
+    support_pose_right.orientation.w = 0.70710678;
+
+    support_obj_right.primitives.push_back(primitive_right);
+    support_obj_right.primitive_poses.push_back(support_pose_right);
+    psi_.applyCollisionObject(support_obj_right);
+
+    RCLCPP_INFO(logger(),
+                "[MtcTask:%s] Added right support surface for '%s' at (%.2f, %.2f, %.2f)",
+                task_name_.c_str(), object_id.c_str(),
+                support_pose_right.position.x, support_pose_right.position.y,
+                support_pose_right.position.z);
+
+}
+
+
+void MtcTask::createLeftSupportSurface(const std::string& object_id) {
+    if(!config_.enable_surfaces) return;
+    if(!has_surface_info_) {
+        RCLCPP_WARN(logger(), "[MtcTask:%s] No surface info provided, skipping left support surface",
+                    task_name_.c_str());
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj_left;
+    support_obj_left.id = object_id + "_support_left";
+    support_obj_left.header.frame_id = config_.world_frame;
+    support_obj_left.operation = moveit_msgs::msg::CollisionObject::ADD;
+
+    shape_msgs::msg::SolidPrimitive primitive_left;
+    primitive_left.type = shape_msgs::msg::SolidPrimitive::BOX;
+    primitive_left.dimensions.resize(3);
+    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = 0.01;
+    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.3;
+    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = object_size_.z + 0.2;
+
+    geometry_msgs::msg::Pose support_pose_left;
+    // Keep the left support on the side opposite the right support.
+    support_pose_left.position.x = object_pose_.position.x - (object_size_.x / 2.0) - 0.01;
+    support_pose_left.position.y = object_pose_.position.y - (object_size_.y / 2.0) - 0.15; // Move it to the left side of the object
+    support_pose_left.position.z = object_pose_.position.z + 0.10;
+    support_pose_left.orientation.x = 0.0;
+    support_pose_left.orientation.y = 0.0;
+    support_pose_left.orientation.z = -0.70710678;
+    support_pose_left.orientation.w = 0.70710678;
+
+    support_obj_left.primitives.push_back(primitive_left);
+    support_obj_left.primitive_poses.push_back(support_pose_left);
+    psi_.applyCollisionObject(support_obj_left);
+
+    RCLCPP_INFO(logger(),
+                "[MtcTask:%s] Added left support surface for '%s' at (%.2f, %.2f, %.2f)",
+                task_name_.c_str(), object_id.c_str(),
+                support_pose_left.position.x, support_pose_left.position.y,
+                support_pose_left.position.z);
+}
 
 void MtcTask::removeTopSupportSurface(const std::string& object_id) {
     if (!config_.enable_surfaces) return;
@@ -255,12 +337,50 @@ void MtcTask::removeTopSupportSurface(const std::string& object_id) {
 
 }
 
+void MtcTask::removeRightSupportSurface(const std::string& object_id)
+{
+    if (!config_.enable_surfaces) return;
+
+    if(!has_surface_info_){
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj_right;
+    support_obj_right.id = object_id + "_support_right";
+    support_obj_right.header.frame_id = config_.world_frame;
+    support_obj_right.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+
+    psi_.applyCollisionObject(support_obj_right);
+
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Removed support surface '%s_support_right'",
+                task_name_.c_str(), object_id.c_str());
+}
+
+
+void MtcTask::removeLeftSupportSurface(const std::string& object_id)
+{
+    if (!config_.enable_surfaces) return;
+
+    if(!has_surface_info_){
+        return;
+    }
+
+    moveit_msgs::msg::CollisionObject support_obj_left;
+    support_obj_left.id = object_id + "_support_left";
+    support_obj_left.header.frame_id = config_.world_frame;
+    support_obj_left.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+
+    psi_.applyCollisionObject(support_obj_left);
+
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Removed support surface '%s_support_left'",
+                task_name_.c_str(), object_id.c_str());
+}
+
 void MtcTask::removeSupportSurface(const std::string& object_id)
 {
     if (!config_.enable_surfaces) return;
 
-    if (!has_surface_info_)
-    {
+    if(!has_surface_info_){
         return;
     }
 
