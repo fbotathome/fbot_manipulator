@@ -44,6 +44,8 @@ struct MtcConfig
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
     double support_height = 0.01;
     bool enable_surfaces = true;
+    std::string robot_collision_frame = "arm_mount_link";
+    std::string robot_collision_id = "boris_robot";
 };
 
 class MtcTask
@@ -62,6 +64,10 @@ public:
                             const geometry_msgs::msg::Vector3& size);
 
     void removeCollisionObject(const std::string& object_id);
+
+    void addRobotCollisionObject();
+
+    void removeRobotCollisionObject();
 
     void setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
                         const geometry_msgs::msg::Vector3& size);

@@ -163,6 +163,8 @@ manipulation_task_server:
       hand_frame: "link_tcp"
       world_frame: "world"
       surface_link: "world"
+      robot_collision_frame: "arm_mount_link"
+      robot_collision_id: "boris_robot"
       approach_min: 0.05       # meters
       approach_max: 0.15
       lift_min: 0.08
@@ -176,6 +178,12 @@ manipulation_task_server:
       pour_angle_delta: 0.785  # radians - pour rotation angle
       pour_wait_time: 2.0      # seconds - wait time during pouring
 ```
+
+During each manipulation task, the task server adds the BORIS v2 base and torso
+collision boxes to the MoveIt planning scene using `arm_mount_link` as their
+reference frame. The object is removed on task completion, failure, or
+cancellation. The active TF/planning-scene setup must publish the shared
+`arm_mount_link` frame.
 
 
 ## Requirements

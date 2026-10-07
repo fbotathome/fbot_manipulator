@@ -123,16 +123,22 @@ private:
         }
 
         mtc_task->setSurfaceInfo(goal->object_pose, goal->object_size);
+        mtc_task->addRobotCollisionObject();
         mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
 
-        // Check cancellation
-        if (goal_handle->is_canceling())
-        {
+        auto cleanup_collision_objects = [&]() {
             mtc_task->removeCollisionObject(object_id);
             mtc_task->removeSupportSurface(object_id);
             mtc_task->removeTopSupportSurface(object_id);
             mtc_task->removeRightSupportSurface(object_id);
             mtc_task->removeLeftSupportSurface(object_id);
+            mtc_task->removeRobotCollisionObject();
+        };
+
+        // Check cancellation
+        if (goal_handle->is_canceling())
+        {
+            cleanup_collision_objects();
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -144,11 +150,7 @@ private:
         publishFeedback(goal_handle, "Building task", 0.1);
         if (!mtc_task->buildTask())
         {
-            mtc_task->removeCollisionObject(object_id);
-            mtc_task->removeSupportSurface(object_id);
-            mtc_task->removeTopSupportSurface(object_id);
-            mtc_task->removeRightSupportSurface(object_id);
-            mtc_task->removeLeftSupportSurface(object_id);
+            cleanup_collision_objects();
             result->success = false;
             result->message = "Failed to build task";
             goal_handle->abort(result);
@@ -160,11 +162,7 @@ private:
         publishFeedback(goal_handle, "Planning", 0.3);
         if (!mtc_task->plan())
         {
-            mtc_task->removeCollisionObject(object_id);
-            mtc_task->removeSupportSurface(object_id);
-            mtc_task->removeTopSupportSurface(object_id);
-            mtc_task->removeRightSupportSurface(object_id);
-            mtc_task->removeLeftSupportSurface(object_id);
+            cleanup_collision_objects();
             result->success = false;
             result->message = "Planning failed";
             goal_handle->abort(result);
@@ -174,11 +172,7 @@ private:
 
         if (goal_handle->is_canceling())
         {
-            mtc_task->removeCollisionObject(object_id);
-            mtc_task->removeSupportSurface(object_id);
-            mtc_task->removeTopSupportSurface(object_id);
-            mtc_task->removeRightSupportSurface(object_id);
-            mtc_task->removeLeftSupportSurface(object_id);
+            cleanup_collision_objects();
             result->success = false;
             result->message = "Cancelled";
             goal_handle->canceled(result);
@@ -190,11 +184,7 @@ private:
         publishFeedback(goal_handle, "Executing", 0.5);
         if (!mtc_task->execute())
         {
-            mtc_task->removeCollisionObject(object_id);
-            mtc_task->removeSupportSurface(object_id);
-            mtc_task->removeTopSupportSurface(object_id);
-            mtc_task->removeRightSupportSurface(object_id);
-            mtc_task->removeLeftSupportSurface(object_id);
+            cleanup_collision_objects();
             result->success = false;
             result->message = "Execution failed";
             goal_handle->abort(result);
@@ -204,11 +194,7 @@ private:
 
         // Success
         publishFeedback(goal_handle, "Done", 1.0);
-        mtc_task->removeCollisionObject(object_id);
-        mtc_task->removeSupportSurface(object_id);
-        mtc_task->removeTopSupportSurface(object_id);
-        mtc_task->removeRightSupportSurface(object_id);
-        mtc_task->removeLeftSupportSurface(object_id);
+        cleanup_collision_objects();
         result->success = true;
         result->message = "Task completed successfully";
         goal_handle->succeed(result);

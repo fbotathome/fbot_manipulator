@@ -43,6 +43,12 @@ void MtcTask::loadConfig()
 
     node_->get_parameter_or("mtc.support_height", config_.support_height, config_.support_height);
     node_->get_parameter_or("mtc.enable_surfaces", config_.enable_surfaces, config_.enable_surfaces);
+    node_->get_parameter_or("mtc.robot_collision_frame",
+                            config_.robot_collision_frame,
+                            config_.robot_collision_frame);
+    node_->get_parameter_or("mtc.robot_collision_id",
+                            config_.robot_collision_id,
+                            config_.robot_collision_id);
 
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
     // First translate along Z (which becomes the approach direction after rotation)
@@ -141,6 +147,66 @@ void MtcTask::removeCollisionObject(const std::string& object_id)
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed collision object '%s'",
                 task_name_.c_str(), object_id.c_str());
+}
+
+void MtcTask::addRobotCollisionObject()
+{
+    moveit_msgs::msg::CollisionObject object;
+    object.id = config_.robot_collision_id;
+    object.header.frame_id = config_.robot_collision_frame;
+    object.operation = moveit_msgs::msg::CollisionObject::ADD;
+
+    // Collision boxes and poses are derived from fbot_description/urdf/v2/robot.xacro.
+    shape_msgs::msg::SolidPrimitive base;
+    base.type = shape_msgs::msg::SolidPrimitive::BOX;
+    base.dimensions = {0.577045, 0.434, 0.493089};
+    geometry_msgs::msg::Pose base_pose;
+    base_pose.position.x = -0.102573;
+    base_pose.position.z = -0.245044;
+    base_pose.orientation.w = 1.0;
+
+    shape_msgs::msg::SolidPrimitive torso;
+    torso.type = shape_msgs::msg::SolidPrimitive::BOX;
+    torso.dimensions = {0.234, 0.274, 0.8};
+    geometry_msgs::msg::Pose torso_pose;
+    torso_pose.position.x = -0.237573;
+    torso_pose.position.z = 0.3485;
+    torso_pose.orientation.w = 1.0;
+
+    object.primitives = {base, torso};
+    object.primitive_poses = {base_pose, torso_pose};
+
+    psi_.applyCollisionObject(object);
+    if (planning_scene_pub_) {
+        moveit_msgs::msg::PlanningScene planning_scene;
+        planning_scene.world.collision_objects.push_back(object);
+        planning_scene.is_diff = true;
+        planning_scene_pub_->publish(planning_scene);
+    }
+
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Added robot collision object '%s' in frame '%s'",
+                task_name_.c_str(),
+                config_.robot_collision_id.c_str(),
+                config_.robot_collision_frame.c_str());
+}
+
+void MtcTask::removeRobotCollisionObject()
+{
+    moveit_msgs::msg::CollisionObject object;
+    object.id = config_.robot_collision_id;
+    object.header.frame_id = config_.robot_collision_frame;
+    object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+
+    psi_.applyCollisionObject(object);
+    if (planning_scene_pub_) {
+        moveit_msgs::msg::PlanningScene planning_scene;
+        planning_scene.world.collision_objects.push_back(object);
+        planning_scene.is_diff = true;
+        planning_scene_pub_->publish(planning_scene);
+    }
+
+    RCLCPP_INFO(logger(), "[MtcTask:%s] Removed robot collision object '%s'",
+                task_name_.c_str(), config_.robot_collision_id.c_str());
 }
 
 void MtcTask::setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
