@@ -122,12 +122,20 @@ private:
             return;
         }
 
-        mtc_task->setSurfaceInfo(goal->object_pose, goal->object_size);
+        // PLACE works on the object already held, and its goal carries no object pose/size
+        // (zeros): a box with the held object's id would keep MoveIt from detaching it, removing
+        // one on failure drops the hand-object collision allowance the pick set, and support
+        // surfaces built from a zero pose would sit at the arm's base.
+        const bool is_place = goal->task_type == ManipulationTaskAction::Goal::PLACE;
+        if (!is_place)
+            mtc_task->setSurfaceInfo(goal->object_pose, goal->object_size);
         mtc_task->addRobotCollisionObject();
-        mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
+        if (!is_place)
+            mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
 
         auto cleanup_collision_objects = [&]() {
-            mtc_task->removeCollisionObject(object_id);
+            if (!is_place)
+                mtc_task->removeCollisionObject(object_id);
             mtc_task->removeSupportSurface(object_id);
             mtc_task->removeTopSupportSurface(object_id);
             mtc_task->removeRightSupportSurface(object_id);
