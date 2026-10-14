@@ -190,7 +190,9 @@ bool MtcPlaceTask::buildTask()
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
-        stage->setGoal("home");
+        // hold-up, as pick / pick-and-place / pour: on BORIS v2 "home" (all zeros) hangs the
+        // gripper low in front of the base, and getting there sweeps the table's edge.
+        stage->setGoal("hold-up");
         task_.add(std::move(stage));
     }
 
