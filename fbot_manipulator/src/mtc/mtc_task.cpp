@@ -159,10 +159,12 @@ void MtcTask::addRobotCollisionObject()
     // Collision boxes and poses are derived from fbot_description/urdf/v2/robot.xacro.
     shape_msgs::msg::SolidPrimitive base;
     base.type = shape_msgs::msg::SolidPrimitive::BOX;
-    base.dimensions = {0.577045, 0.434, 0.493089};
+    // The base's URDF box reaches 1.5 mm above arm_mount_link, where link_base sits: every arm
+    // state collided with it. Top lowered to 5 mm below the mount (bottom unchanged).
+    base.dimensions = {0.577045, 0.434, 0.486589};
     geometry_msgs::msg::Pose base_pose;
     base_pose.position.x = -0.102573;
-    base_pose.position.z = -0.245044;
+    base_pose.position.z = -0.248294;
     base_pose.orientation.w = 1.0;
 
     shape_msgs::msg::SolidPrimitive torso;
