@@ -10,9 +10,11 @@ namespace fbot_manipulator
 {
 
 MtcPickAndPlaceTask::MtcPickAndPlaceTask(rclcpp::Node::SharedPtr node,
-                                         const ManipulationGoal& goal)
+                                         const ManipulationGoal& goal,
+                                         bool approach_from_front)
     : MtcTask("pick_and_place", node),
-      goal_(goal)
+      goal_(goal),
+      approach_from_front_(approach_from_front)
 {
 }
 
@@ -80,13 +82,15 @@ bool MtcPickAndPlaceTask::buildTask()
     // 2. CHAMA O PICK E GUARDA O RESULTADO
     mtc::Stage* attach_stage = MtcSharedLogic::addPickStages(
         task_, goal_.target_id, object_pose, current_state, 
-        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger()
+        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger(),
+        approach_from_front_
     );
 
     // 4. CHAMA O PLACE
     MtcSharedLogic::addPlaceStages(
         task_, goal_.target_id, goal_.place_poses.front(), attach_stage, 
-        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger()
+        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger(),
+        approach_from_front_
     );
 
     // 5. Return Home Final

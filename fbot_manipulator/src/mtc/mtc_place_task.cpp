@@ -1,13 +1,16 @@
 #include "fbot_manipulator/mtc/mtc_place_task.hpp"
+
 #include "fbot_manipulator/mtc/mtc_shared_logic.hpp"
 
 namespace fbot_manipulator
 {
 
 MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
-                           const ManipulationGoal& goal)
+                           const ManipulationGoal& goal,
+                           bool approach_from_front)
     : MtcTask("place", node),
-      goal_(goal)
+      goal_(goal),
+      approach_from_front_(approach_from_front)
 {
 }
 
@@ -38,7 +41,8 @@ bool MtcPlaceTask::buildTask()
     // 2. CHAMA A LÓGICA COMPARTILHADA DE PLACE
     MtcSharedLogic::addPlaceStages(
         task_, goal_.target_id, goal_.place_poses.front(), attach_object_stage, 
-        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger()
+        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger(),
+        approach_from_front_
     );
     
     // 3. Return Home

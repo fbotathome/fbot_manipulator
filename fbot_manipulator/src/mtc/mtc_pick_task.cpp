@@ -10,9 +10,11 @@ namespace fbot_manipulator
 {
 
 MtcPickTask::MtcPickTask(rclcpp::Node::SharedPtr node,
-                         const ManipulationGoal& goal)
+                         const ManipulationGoal& goal,
+                         bool approach_from_front)
     : MtcTask("pick", node),
-      goal_(goal)
+      goal_(goal),
+      approach_from_front_(approach_from_front)
 {
 }
 
@@ -80,7 +82,8 @@ bool MtcPickTask::buildTask()
     // 2. CHAMA A LÓGICA COMPARTILHADA DE PICK
     MtcSharedLogic::addPickStages(
         task_, goal_.target_id, object_pose, current_state, 
-        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger()
+        config_, pipeline_planner_, cartesian_planner_, joint_planner_, logger(),
+        approach_from_front_
     );
 
     // 3. Return Home

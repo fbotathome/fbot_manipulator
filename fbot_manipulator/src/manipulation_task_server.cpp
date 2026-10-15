@@ -74,8 +74,10 @@ private:
             return rclcpp_action::GoalResponse::REJECT;
         }
 
-        RCLCPP_INFO(get_logger(), "Accepting goal: task_type=%d, target_ids=%zu, cargo_indices=%zu",
-                     goal->task_type, goal->target_ids.size(), goal->cargo_indices.size());
+        RCLCPP_INFO(get_logger(),
+                    "Accepting goal: task_type=%d, target_ids=%zu, cargo_indices=%zu, approach_from_front=%s",
+                    goal->task_type, goal->target_ids.size(), goal->cargo_indices.size(),
+                    goal->approach_from_front ? "true" : "false");
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
 
@@ -168,17 +170,20 @@ private:
 
         MtcTask::Ptr mtc_task;
 
+        // Flag lida do goal e repassada para Pick, Place e PickAndPlace
+        const bool approach_from_front = action_goal->approach_from_front;
+
         // 3. Instanciando as tarefas passando a struct unificada
         switch (internal_goal.task_type)
         {
         case ManipulationTaskAction::Goal::PICK:
-            mtc_task = std::make_shared<MtcPickTask>(shared_from_this(), internal_goal);
+            mtc_task = std::make_shared<MtcPickTask>(shared_from_this(), internal_goal, approach_from_front);
             break;
         case ManipulationTaskAction::Goal::PLACE:
-            mtc_task = std::make_shared<MtcPlaceTask>(shared_from_this(), internal_goal);
+            mtc_task = std::make_shared<MtcPlaceTask>(shared_from_this(), internal_goal, approach_from_front);
             break;
         case ManipulationTaskAction::Goal::PICK_AND_PLACE:
-            mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), internal_goal);
+            mtc_task = std::make_shared<MtcPickAndPlaceTask>(shared_from_this(), internal_goal, approach_from_front);
             break;
         case ManipulationTaskAction::Goal::LOAD_CARGO:
             mtc_task = std::make_shared<MtcLoadCargoTask>(shared_from_this(), internal_goal);

@@ -82,7 +82,8 @@ mtc::Stage* MtcSharedLogic::addPickStages(
     std::shared_ptr<mtc::solvers::PipelinePlanner> pipeline_planner,
     std::shared_ptr<mtc::solvers::CartesianPath> cartesian_planner,
     std::shared_ptr<mtc::solvers::JointInterpolationPlanner> joint_planner,
-    rclcpp::Logger logger)
+    rclcpp::Logger logger,
+    bool approach_from_front)
 {
     // ---- Open Gripper ----
     {
@@ -136,10 +137,18 @@ mtc::Stage* MtcSharedLogic::addPickStages(
 
             geometry_msgs::msg::Vector3Stamped vec;
             if (waist_aligned) {
+                if (approach_from_front) {
+                    // +X aponta para a frente da garra no link do WX200
+                    vec.header.frame_id = config.hand_frame;
+                    vec.vector.x = 1.0;
+                    vec.vector.y = 0.0;
+                    vec.vector.z = 0.0;
+                } else {
                 vec.header.frame_id = config.world_frame;
                 vec.vector.x = 0.0;
                 vec.vector.y = 0.0;
                 vec.vector.z = -1.0; // Desce verticalmente (top-down)
+            }
             }
             stage->setDirection(vec);
             container->insert(std::move(stage));
@@ -153,6 +162,13 @@ mtc::Stage* MtcSharedLogic::addPickStages(
                 target.header.frame_id = config.world_frame;
                 target.pose.position = object_pose.position;
 
+                tf2::Quaternion q_grasp;
+
+                if (approach_from_front) {
+                    // Garra horizontal, apontando da base do robô em direção ao objeto
+                    double base_to_obj_yaw = std::atan2(object_pose.position.y, object_pose.position.x);
+                    q_grasp.setRPY(0.0, 0.0, base_to_obj_yaw);
+                } else {
                 tf2::Quaternion q_obj(
                     object_pose.orientation.x,
                     object_pose.orientation.y,
@@ -171,8 +187,8 @@ mtc::Stage* MtcSharedLogic::addPickStages(
                 double grasp_yaw = std::fmod(obj_yaw, M_PI_2);
                 if (grasp_yaw < 0.0) grasp_yaw += M_PI_2;
 
-                tf2::Quaternion q_grasp;
                 q_grasp.setRPY(0.0, M_PI_2, grasp_yaw);
+                }
 
                 target.pose.orientation.x = q_grasp.x();
                 target.pose.orientation.y = q_grasp.y();
@@ -281,7 +297,8 @@ mtc::Stage* MtcSharedLogic::addPlaceStages(
     std::shared_ptr<mtc::solvers::PipelinePlanner> pipeline_planner,
     std::shared_ptr<mtc::solvers::CartesianPath> cartesian_planner,
     std::shared_ptr<mtc::solvers::JointInterpolationPlanner> joint_planner,
-    rclcpp::Logger logger)
+    rclcpp::Logger logger,
+    bool approach_from_front)
 {
     // ---- Move to Place (Connect) ----
     {
@@ -313,8 +330,19 @@ mtc::Stage* MtcSharedLogic::addPlaceStages(
             stage->setMinMaxDistance(config.place_lower_min, config.place_lower_max);
 
             geometry_msgs::msg::Vector3Stamped vec;
+            if (approach_from_front) {
+                // Aproxima pela frente no eixo +X da garra
+                vec.header.frame_id = config.hand_frame;
+                vec.vector.x = 1.0;
+                vec.vector.y = 0.0;
+                vec.vector.z = 0.0;
+            } else {
+                // Desce no eixo -Z global
             vec.header.frame_id = config.world_frame;
+                vec.vector.x = 0.0;
+                vec.vector.y = 0.0;
             vec.vector.z = -1.0;
+            }
             stage->setDirection(vec);
             container->insert(std::move(stage));
         }
@@ -327,6 +355,12 @@ mtc::Stage* MtcSharedLogic::addPlaceStages(
 
             std::unique_ptr<mtc::Stage> generator;
             if (waist_aligned) {
+                tf2::Quaternion q_place;
+
+                if (approach_from_front) {
+                    double yaw_to_place = std::atan2(place_pose.position.y, place_pose.position.x);
+                    q_place.setRPY(0.0, 0.0, yaw_to_place);
+                } else {
                 tf2::Quaternion q_target(
                     place_pose.orientation.x,
                     place_pose.orientation.y,
@@ -339,8 +373,8 @@ mtc::Stage* MtcSharedLogic::addPlaceStages(
                 double place_yaw = std::fmod(yaw, M_PI_2);
                 if (place_yaw < 0.0) place_yaw += M_PI_2;
 
-                tf2::Quaternion q_place;
                 q_place.setRPY(0.0, M_PI_2, place_yaw);
+                }
 
                 geometry_msgs::msg::PoseStamped target;
                 target.header.frame_id = config.world_frame;
@@ -412,8 +446,18 @@ mtc::Stage* MtcSharedLogic::addPlaceStages(
             stage->properties().set("marker_ns", "retreat");
 
             geometry_msgs::msg::Vector3Stamped vec;
+            if (approach_from_front) {
+                // Recua no eixo -X da garra (para trás)
+                vec.header.frame_id = config.hand_frame;
+                vec.vector.x = -1.0;
+                vec.vector.y = 0.0;
+                vec.vector.z = 0.0;
+            } else {
             vec.header.frame_id = config.world_frame;
-            vec.vector.z = 1.0;
+                vec.vector.x = 0.0;
+                vec.vector.y = 0.0;
+                vec.vector.z = 1.0; // Sobe no eixo global Z
+            }
             stage->setDirection(vec);
             container->insert(std::move(stage));
         }
