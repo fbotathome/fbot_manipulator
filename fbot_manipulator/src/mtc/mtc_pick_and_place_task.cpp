@@ -72,6 +72,12 @@ bool MtcPickAndPlaceTask::buildTask()
 
         // Approach
         {
+            auto allow_collision = std::make_unique<mtc::stages::ModifyPlanningScene>("allow base collision during approach");
+            allow_collision->allowCollisions(config_.robot_collision_id,
+                                             {"link_base"},
+                                             true);
+            container->insert(std::move(allow_collision));
+
             auto stage = std::make_unique<mtc::stages::MoveRelative>("approach object", cartesian_planner_);
             stage->properties().set("marker_ns", "approach");
             stage->properties().set("link", config_.hand_frame);

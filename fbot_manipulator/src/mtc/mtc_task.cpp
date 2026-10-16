@@ -162,7 +162,7 @@ void MtcTask::addRobotCollisionObject()
     base.dimensions = {0.577045, 0.434, 0.493089};
     geometry_msgs::msg::Pose base_pose;
     base_pose.position.x = -0.102573;
-    base_pose.position.z = -0.245044;
+    base_pose.position.z = -0.25;
     base_pose.orientation.w = 1.0;
 
     shape_msgs::msg::SolidPrimitive torso;
@@ -198,12 +198,6 @@ void MtcTask::removeRobotCollisionObject()
     object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
 
     psi_.applyCollisionObject(object);
-    if (planning_scene_pub_) {
-        moveit_msgs::msg::PlanningScene planning_scene;
-        planning_scene.world.collision_objects.push_back(object);
-        planning_scene.is_diff = true;
-        planning_scene_pub_->publish(planning_scene);
-    }
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed robot collision object '%s'",
                 task_name_.c_str(), config_.robot_collision_id.c_str());

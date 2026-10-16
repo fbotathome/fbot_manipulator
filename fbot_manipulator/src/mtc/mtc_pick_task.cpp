@@ -66,6 +66,9 @@ bool MtcPickTask::buildTask()
                                                  ->getJointModelGroup(config_.arm_group_name)
                                                  ->getLinkModelNamesWithCollisionGeometry(),
                                              true);
+            allow_collision->allowCollisions(config_.robot_collision_id,
+                                             {"link_base"},
+                                             true);
             container->insert(std::move(allow_collision));
 
             auto stage = std::make_unique<mtc::stages::MoveRelative>("approach object", cartesian_planner_);
