@@ -74,9 +74,10 @@ void MtcTask::setupSolvers()
     cartesian_planner_->setStepSize(0.002);
 
     joint_planner_ = std::make_shared<mtc::solvers::JointInterpolationPlanner>();
-    
 }
 
+
+//Create the collision object and add it to the planning scene. The object is a box with the given size and pose.
 void MtcTask::addCollisionObject(const std::string& object_id,
                                  const geometry_msgs::msg::Pose& pose,
                                  const geometry_msgs::msg::Vector3& size)
@@ -96,6 +97,15 @@ void MtcTask::addCollisionObject(const std::string& object_id,
         ps.world.collision_objects.push_back(object);
         ps.is_diff = true;
         planning_scene_pub_->publish(ps);
+    }
+
+    if (!config_.enable_surfaces) return;
+
+    if (!has_surface_info_)
+    {
+        RCLCPP_WARN(logger(), "[MtcTask:%s] No surface info provided, skipping collision object",
+                    task_name_.c_str());
+        return;
     }
 
     // Add small support object underneath the detected object so the planner
