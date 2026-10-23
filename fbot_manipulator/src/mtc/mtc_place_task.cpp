@@ -23,12 +23,6 @@ MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
 
 bool MtcPlaceTask::buildTask()
 {
-
-    if (place_pose_name_.empty())
-        object_pose_ = place_pose_;
-
-    createSupportSurface(object_id_);
-
     task_.stages()->setName("place_" + object_id_);
     task_.loadRobotModel(node_);
 
