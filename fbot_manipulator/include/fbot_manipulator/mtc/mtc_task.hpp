@@ -22,6 +22,37 @@ namespace fbot_manipulator
 {
 namespace mtc = moveit::task_constructor;
 
+struct ShelfSurfaceConfig
+{
+    double x_padding = 0.2;
+    double y_padding = 0.7;
+    double thickness = 0.01;
+    double x_offset = 0.06;
+    double y_offset = 0.0;
+    double z_offset = 0.0;
+};
+
+struct ShelfSideConfig
+{
+    double x_thickness = 0.01;
+    double y_padding = 0.3;
+    double z_padding = 0.2;
+    double x_gap = 0.01;
+    double y_offset = 0.2;
+    double z_offset = 0.10;
+    double orientation_z = 0.70710678;
+    double orientation_w = 0.70710678;
+};
+
+struct ShelfConfig
+{
+    ShelfSurfaceConfig bottom;
+    ShelfSurfaceConfig top{0.2, 0.7, 0.01, 0.06, 0.0, 0.2};
+    ShelfSideConfig right;
+    ShelfSideConfig left{0.01, 0.3, 0.2, 0.01, -0.15, 0.10, -0.70710678, 0.70710678};
+    double object_support_clearance = 0.004;
+};
+
 struct MtcConfig
 {
     std::string arm_group_name = "xarm6";
@@ -44,6 +75,7 @@ struct MtcConfig
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
     double support_height = 0.01;
     bool enable_surfaces = true;
+    ShelfConfig shelf;
 };
 
 class MtcTask

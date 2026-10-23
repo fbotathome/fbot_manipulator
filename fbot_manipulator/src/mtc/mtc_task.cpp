@@ -44,6 +44,69 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.support_height", config_.support_height, config_.support_height);
     node_->get_parameter_or("mtc.enable_surfaces", config_.enable_surfaces, config_.enable_surfaces);
 
+    node_->get_parameter_or("shelf.bottom.x_padding", config_.shelf.bottom.x_padding,
+                            config_.shelf.bottom.x_padding);
+    node_->get_parameter_or("shelf.bottom.y_padding", config_.shelf.bottom.y_padding,
+                            config_.shelf.bottom.y_padding);
+    node_->get_parameter_or("shelf.bottom.thickness", config_.shelf.bottom.thickness,
+                            config_.shelf.bottom.thickness);
+    node_->get_parameter_or("shelf.bottom.x_offset", config_.shelf.bottom.x_offset,
+                            config_.shelf.bottom.x_offset);
+    node_->get_parameter_or("shelf.bottom.y_offset", config_.shelf.bottom.y_offset,
+                            config_.shelf.bottom.y_offset);
+    node_->get_parameter_or("shelf.bottom.z_offset", config_.shelf.bottom.z_offset,
+                            config_.shelf.bottom.z_offset);
+
+    node_->get_parameter_or("shelf.top.x_padding", config_.shelf.top.x_padding,
+                            config_.shelf.top.x_padding);
+    node_->get_parameter_or("shelf.top.y_padding", config_.shelf.top.y_padding,
+                            config_.shelf.top.y_padding);
+    node_->get_parameter_or("shelf.top.thickness", config_.shelf.top.thickness,
+                            config_.shelf.top.thickness);
+    node_->get_parameter_or("shelf.top.x_offset", config_.shelf.top.x_offset,
+                            config_.shelf.top.x_offset);
+    node_->get_parameter_or("shelf.top.y_offset", config_.shelf.top.y_offset,
+                            config_.shelf.top.y_offset);
+    node_->get_parameter_or("shelf.top.z_offset", config_.shelf.top.z_offset,
+                            config_.shelf.top.z_offset);
+
+    node_->get_parameter_or("shelf.right.x_thickness", config_.shelf.right.x_thickness,
+                            config_.shelf.right.x_thickness);
+    node_->get_parameter_or("shelf.right.y_padding", config_.shelf.right.y_padding,
+                            config_.shelf.right.y_padding);
+    node_->get_parameter_or("shelf.right.z_padding", config_.shelf.right.z_padding,
+                            config_.shelf.right.z_padding);
+    node_->get_parameter_or("shelf.right.x_gap", config_.shelf.right.x_gap,
+                            config_.shelf.right.x_gap);
+    node_->get_parameter_or("shelf.right.y_offset", config_.shelf.right.y_offset,
+                            config_.shelf.right.y_offset);
+    node_->get_parameter_or("shelf.right.z_offset", config_.shelf.right.z_offset,
+                            config_.shelf.right.z_offset);
+    node_->get_parameter_or("shelf.right.orientation_z", config_.shelf.right.orientation_z,
+                            config_.shelf.right.orientation_z);
+    node_->get_parameter_or("shelf.right.orientation_w", config_.shelf.right.orientation_w,
+                            config_.shelf.right.orientation_w);
+
+    node_->get_parameter_or("shelf.left.x_thickness", config_.shelf.left.x_thickness,
+                            config_.shelf.left.x_thickness);
+    node_->get_parameter_or("shelf.left.y_padding", config_.shelf.left.y_padding,
+                            config_.shelf.left.y_padding);
+    node_->get_parameter_or("shelf.left.z_padding", config_.shelf.left.z_padding,
+                            config_.shelf.left.z_padding);
+    node_->get_parameter_or("shelf.left.x_gap", config_.shelf.left.x_gap,
+                            config_.shelf.left.x_gap);
+    node_->get_parameter_or("shelf.left.y_offset", config_.shelf.left.y_offset,
+                            config_.shelf.left.y_offset);
+    node_->get_parameter_or("shelf.left.z_offset", config_.shelf.left.z_offset,
+                            config_.shelf.left.z_offset);
+    node_->get_parameter_or("shelf.left.orientation_z", config_.shelf.left.orientation_z,
+                            config_.shelf.left.orientation_z);
+    node_->get_parameter_or("shelf.left.orientation_w", config_.shelf.left.orientation_w,
+                            config_.shelf.left.orientation_w);
+    node_->get_parameter_or("shelf.object_support_clearance",
+                            config_.shelf.object_support_clearance,
+                            config_.shelf.object_support_clearance);
+
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
     // First translate along Z (which becomes the approach direction after rotation)
     config_.grasp_frame_transform.translate(Eigen::Vector3d(0, 0, grasp_offset));
@@ -117,7 +180,9 @@ void MtcTask::addCollisionObject(const std::string& object_id,
     support.primitives[0].type = shape_msgs::msg::SolidPrimitive::BOX;
     support.primitives[0].dimensions = { size.x, size.y, config_.support_height };
     geometry_msgs::msg::Pose support_pose = pose;
-    support_pose.position.z = pose.position.z - (size.z / 2.0) - (config_.support_height / 2.0) - 0.004;
+    support_pose.position.z = pose.position.z - (size.z / 2.0) -
+                              (config_.support_height / 2.0) -
+                              config_.shelf.object_support_clearance;
     support.pose = support_pose;
 
     psi_.applyCollisionObject(support);
@@ -179,14 +244,18 @@ void MtcTask::createSupportSurface(const std::string& object_id)
     shape_msgs::msg::SolidPrimitive primitive;
     primitive.type = shape_msgs::msg::SolidPrimitive::BOX;
     primitive.dimensions.resize(3);
-    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = object_size_.x + 0.2;
-    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.7;
-    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = 0.01;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] =
+        object_size_.x + config_.shelf.bottom.x_padding;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] =
+        object_size_.y + config_.shelf.bottom.y_padding;
+    primitive.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] =
+        config_.shelf.bottom.thickness;
 
     geometry_msgs::msg::Pose support_pose;
-    support_pose.position.x = object_pose_.position.x + 0.06;
-    support_pose.position.y = object_pose_.position.y;
-    support_pose.position.z = object_pose_.position.z - (object_size_.z / 2.0) - 0.02;
+    support_pose.position.x = object_pose_.position.x + config_.shelf.bottom.x_offset;
+    support_pose.position.y = object_pose_.position.y + config_.shelf.bottom.y_offset;
+    support_pose.position.z = object_pose_.position.z - (object_size_.z / 2.0) +
+                              config_.shelf.bottom.z_offset;
     support_pose.orientation.x = 0.0;
     support_pose.orientation.y = 0.0;
     support_pose.orientation.z = 0.0;
@@ -221,14 +290,18 @@ void MtcTask::createTopSupportSurface(const std::string& object_id)
     shape_msgs::msg::SolidPrimitive primitive_top;
     primitive_top.type = shape_msgs::msg::SolidPrimitive::BOX;
     primitive_top.dimensions.resize(3);
-    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = object_size_.x + 0.2;
-    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.7;
-    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = 0.01;
+    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] =
+        object_size_.x + config_.shelf.top.x_padding;
+    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] =
+        object_size_.y + config_.shelf.top.y_padding;
+    primitive_top.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] =
+        config_.shelf.top.thickness;
 
     geometry_msgs::msg::Pose support_pose_top;
-    support_pose_top.position.x = object_pose_.position.x + 0.06;
-    support_pose_top.position.y = object_pose_.position.y;
-    support_pose_top.position.z = object_pose_.position.z + (object_size_.z / 2.0) + 0.2;
+    support_pose_top.position.x = object_pose_.position.x + config_.shelf.top.x_offset;
+    support_pose_top.position.y = object_pose_.position.y + config_.shelf.top.y_offset;
+    support_pose_top.position.z = object_pose_.position.z + (object_size_.z / 2.0) +
+                                  config_.shelf.top.z_offset;
     support_pose_top.orientation.x = 0.0;
     support_pose_top.orientation.y = 0.0;
     support_pose_top.orientation.z = 0.0;
@@ -261,18 +334,22 @@ void MtcTask::createRightSupportSurface(const std::string& object_id) {
     shape_msgs::msg::SolidPrimitive primitive_right;
     primitive_right.type = shape_msgs::msg::SolidPrimitive::BOX;
     primitive_right.dimensions.resize(3);
-    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = 0.01;
-    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.3;
-    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = object_size_.z + 0.2;
+    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] =
+        config_.shelf.right.x_thickness;
+    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] =
+        object_size_.y + config_.shelf.right.y_padding;
+    primitive_right.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] =
+        object_size_.z + config_.shelf.right.z_padding;
 
     geometry_msgs::msg::Pose support_pose_right;
-    support_pose_right.position.x = object_pose_.position.x + (object_size_.x / 2.0) + 0.01;
-    support_pose_right.position.y = object_pose_.position.y + 0.2;
-    support_pose_right.position.z = object_pose_.position.z + 0.10;
+    support_pose_right.position.x = object_pose_.position.x + (object_size_.x / 2.0) +
+                                    config_.shelf.right.x_gap;
+    support_pose_right.position.y = object_pose_.position.y + config_.shelf.right.y_offset;
+    support_pose_right.position.z = object_pose_.position.z + config_.shelf.right.z_offset;
     support_pose_right.orientation.x = 0.0;
     support_pose_right.orientation.y = 0.0;
-    support_pose_right.orientation.z = 0.70710678;
-    support_pose_right.orientation.w = 0.70710678;
+    support_pose_right.orientation.z = config_.shelf.right.orientation_z;
+    support_pose_right.orientation.w = config_.shelf.right.orientation_w;
 
     support_obj_right.primitives.push_back(primitive_right);
     support_obj_right.primitive_poses.push_back(support_pose_right);
@@ -303,19 +380,23 @@ void MtcTask::createLeftSupportSurface(const std::string& object_id) {
     shape_msgs::msg::SolidPrimitive primitive_left;
     primitive_left.type = shape_msgs::msg::SolidPrimitive::BOX;
     primitive_left.dimensions.resize(3);
-    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = 0.01;
-    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = object_size_.y + 0.3;
-    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = object_size_.z + 0.2;
+    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] =
+        config_.shelf.left.x_thickness;
+    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] =
+        object_size_.y + config_.shelf.left.y_padding;
+    primitive_left.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] =
+        object_size_.z + config_.shelf.left.z_padding;
 
     geometry_msgs::msg::Pose support_pose_left;
     // Keep the left support on the side opposite the right support.
-    support_pose_left.position.x = object_pose_.position.x - (object_size_.x / 2.0) - 0.01;
-    support_pose_left.position.y = object_pose_.position.y - (object_size_.y / 2.0) - 0.15; // Move it to the left side of the object
-    support_pose_left.position.z = object_pose_.position.z + 0.10;
+    support_pose_left.position.x = object_pose_.position.x - (object_size_.x / 2.0) -
+                                   config_.shelf.left.x_gap;
+    support_pose_left.position.y = object_pose_.position.y + config_.shelf.left.y_offset;
+    support_pose_left.position.z = object_pose_.position.z + config_.shelf.left.z_offset;
     support_pose_left.orientation.x = 0.0;
     support_pose_left.orientation.y = 0.0;
-    support_pose_left.orientation.z = -0.70710678;
-    support_pose_left.orientation.w = 0.70710678;
+    support_pose_left.orientation.z = config_.shelf.left.orientation_z;
+    support_pose_left.orientation.w = config_.shelf.left.orientation_w;
 
     support_obj_left.primitives.push_back(primitive_left);
     support_obj_left.primitive_poses.push_back(support_pose_left);
