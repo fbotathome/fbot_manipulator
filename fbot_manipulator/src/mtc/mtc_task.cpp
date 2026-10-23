@@ -19,93 +19,61 @@ MtcTask::MtcTask(const std::string& task_name,
 
 void MtcTask::loadConfig()
 {
-    node_->get_parameter_or("mtc.arm_group_name", config_.arm_group_name, config_.arm_group_name);
-    node_->get_parameter_or("mtc.hand_group_name", config_.hand_group_name, config_.hand_group_name);
-    node_->get_parameter_or("mtc.hand_frame", config_.hand_frame, config_.hand_frame);
-    node_->get_parameter_or("mtc.world_frame", config_.world_frame, config_.world_frame);
-    node_->get_parameter_or("mtc.surface_link", config_.surface_link, config_.surface_link);
-    node_->get_parameter_or("mtc.approach_min", config_.approach_min, config_.approach_min);
-    node_->get_parameter_or("mtc.approach_max", config_.approach_max, config_.approach_max);
-    node_->get_parameter_or("mtc.lift_min", config_.lift_min, config_.lift_min);
-    node_->get_parameter_or("mtc.lift_max", config_.lift_max, config_.lift_max);
-    node_->get_parameter_or("mtc.retreat_min", config_.retreat_min, config_.retreat_min);
-    node_->get_parameter_or("mtc.retreat_max", config_.retreat_max, config_.retreat_max);
-    node_->get_parameter_or("mtc.max_solutions", config_.max_solutions, config_.max_solutions);
-    node_->get_parameter_or("mtc.grasp_angle_delta", config_.grasp_angle_delta, config_.grasp_angle_delta);
-    node_->get_parameter_or("mtc.pour_angle_delta", config_.pour_angle_delta, config_.pour_angle_delta);
-    node_->get_parameter_or("mtc.pour_wait_time", config_.pour_wait_time, config_.pour_wait_time);
-    node_->get_parameter_or("mtc.pour_side_offset", config_.pour_side_offset, config_.pour_side_offset);
-    node_->get_parameter_or("mtc.pour_above_offset", config_.pour_above_offset, config_.pour_above_offset);
+    const auto load_parameter = [this](const std::string& name, auto& value) {
+        node_->get_parameter_or(name, value, value);
+    };
+
+    load_parameter("mtc.arm_group_name", config_.arm_group_name);
+    load_parameter("mtc.hand_group_name", config_.hand_group_name);
+    load_parameter("mtc.hand_frame", config_.hand_frame);
+    load_parameter("mtc.world_frame", config_.world_frame);
+    load_parameter("mtc.surface_link", config_.surface_link);
+    load_parameter("mtc.approach_min", config_.approach_min);
+    load_parameter("mtc.approach_max", config_.approach_max);
+    load_parameter("mtc.lift_min", config_.lift_min);
+    load_parameter("mtc.lift_max", config_.lift_max);
+    load_parameter("mtc.retreat_min", config_.retreat_min);
+    load_parameter("mtc.retreat_max", config_.retreat_max);
+    load_parameter("mtc.max_solutions", config_.max_solutions);
+    load_parameter("mtc.grasp_angle_delta", config_.grasp_angle_delta);
+    load_parameter("mtc.pour_angle_delta", config_.pour_angle_delta);
+    load_parameter("mtc.pour_wait_time", config_.pour_wait_time);
+    load_parameter("mtc.pour_side_offset", config_.pour_side_offset);
+    load_parameter("mtc.pour_above_offset", config_.pour_above_offset);
 
     // Grasp frame: rotate Z to point out of gripper with offset
     double grasp_offset = 0.0;
     node_->get_parameter_or("mtc.grasp_offset", grasp_offset, 0.0);
 
-    node_->get_parameter_or("mtc.support_height", config_.support_height, config_.support_height);
-    node_->get_parameter_or("mtc.enable_surfaces", config_.enable_surfaces, config_.enable_surfaces);
+    load_parameter("mtc.support_height", config_.support_height);
+    load_parameter("mtc.enable_surfaces", config_.enable_surfaces);
 
-    node_->get_parameter_or("shelf.bottom.x_padding", config_.shelf.bottom.x_padding,
-                            config_.shelf.bottom.x_padding);
-    node_->get_parameter_or("shelf.bottom.y_padding", config_.shelf.bottom.y_padding,
-                            config_.shelf.bottom.y_padding);
-    node_->get_parameter_or("shelf.bottom.thickness", config_.shelf.bottom.thickness,
-                            config_.shelf.bottom.thickness);
-    node_->get_parameter_or("shelf.bottom.x_offset", config_.shelf.bottom.x_offset,
-                            config_.shelf.bottom.x_offset);
-    node_->get_parameter_or("shelf.bottom.y_offset", config_.shelf.bottom.y_offset,
-                            config_.shelf.bottom.y_offset);
-    node_->get_parameter_or("shelf.bottom.z_offset", config_.shelf.bottom.z_offset,
-                            config_.shelf.bottom.z_offset);
+    const auto load_surface = [&load_parameter](const std::string& name,
+                                                 ShelfSurfaceConfig& surface) {
+        load_parameter(name + ".x_padding", surface.x_padding);
+        load_parameter(name + ".y_padding", surface.y_padding);
+        load_parameter(name + ".thickness", surface.thickness);
+        load_parameter(name + ".x_offset", surface.x_offset);
+        load_parameter(name + ".y_offset", surface.y_offset);
+        load_parameter(name + ".z_offset", surface.z_offset);
+    };
 
-    node_->get_parameter_or("shelf.top.x_padding", config_.shelf.top.x_padding,
-                            config_.shelf.top.x_padding);
-    node_->get_parameter_or("shelf.top.y_padding", config_.shelf.top.y_padding,
-                            config_.shelf.top.y_padding);
-    node_->get_parameter_or("shelf.top.thickness", config_.shelf.top.thickness,
-                            config_.shelf.top.thickness);
-    node_->get_parameter_or("shelf.top.x_offset", config_.shelf.top.x_offset,
-                            config_.shelf.top.x_offset);
-    node_->get_parameter_or("shelf.top.y_offset", config_.shelf.top.y_offset,
-                            config_.shelf.top.y_offset);
-    node_->get_parameter_or("shelf.top.z_offset", config_.shelf.top.z_offset,
-                            config_.shelf.top.z_offset);
+    const auto load_side = [&load_parameter](const std::string& name, ShelfSideConfig& side) {
+        load_parameter(name + ".x_thickness", side.x_thickness);
+        load_parameter(name + ".y_padding", side.y_padding);
+        load_parameter(name + ".z_padding", side.z_padding);
+        load_parameter(name + ".x_gap", side.x_gap);
+        load_parameter(name + ".y_offset", side.y_offset);
+        load_parameter(name + ".z_offset", side.z_offset);
+        load_parameter(name + ".orientation_z", side.orientation_z);
+        load_parameter(name + ".orientation_w", side.orientation_w);
+    };
 
-    node_->get_parameter_or("shelf.right.x_thickness", config_.shelf.right.x_thickness,
-                            config_.shelf.right.x_thickness);
-    node_->get_parameter_or("shelf.right.y_padding", config_.shelf.right.y_padding,
-                            config_.shelf.right.y_padding);
-    node_->get_parameter_or("shelf.right.z_padding", config_.shelf.right.z_padding,
-                            config_.shelf.right.z_padding);
-    node_->get_parameter_or("shelf.right.x_gap", config_.shelf.right.x_gap,
-                            config_.shelf.right.x_gap);
-    node_->get_parameter_or("shelf.right.y_offset", config_.shelf.right.y_offset,
-                            config_.shelf.right.y_offset);
-    node_->get_parameter_or("shelf.right.z_offset", config_.shelf.right.z_offset,
-                            config_.shelf.right.z_offset);
-    node_->get_parameter_or("shelf.right.orientation_z", config_.shelf.right.orientation_z,
-                            config_.shelf.right.orientation_z);
-    node_->get_parameter_or("shelf.right.orientation_w", config_.shelf.right.orientation_w,
-                            config_.shelf.right.orientation_w);
-
-    node_->get_parameter_or("shelf.left.x_thickness", config_.shelf.left.x_thickness,
-                            config_.shelf.left.x_thickness);
-    node_->get_parameter_or("shelf.left.y_padding", config_.shelf.left.y_padding,
-                            config_.shelf.left.y_padding);
-    node_->get_parameter_or("shelf.left.z_padding", config_.shelf.left.z_padding,
-                            config_.shelf.left.z_padding);
-    node_->get_parameter_or("shelf.left.x_gap", config_.shelf.left.x_gap,
-                            config_.shelf.left.x_gap);
-    node_->get_parameter_or("shelf.left.y_offset", config_.shelf.left.y_offset,
-                            config_.shelf.left.y_offset);
-    node_->get_parameter_or("shelf.left.z_offset", config_.shelf.left.z_offset,
-                            config_.shelf.left.z_offset);
-    node_->get_parameter_or("shelf.left.orientation_z", config_.shelf.left.orientation_z,
-                            config_.shelf.left.orientation_z);
-    node_->get_parameter_or("shelf.left.orientation_w", config_.shelf.left.orientation_w,
-                            config_.shelf.left.orientation_w);
-    node_->get_parameter_or("shelf.object_support_clearance",
-                            config_.shelf.object_support_clearance,
-                            config_.shelf.object_support_clearance);
+    load_surface("shelf.bottom", config_.shelf.bottom);
+    load_surface("shelf.top", config_.shelf.top);
+    load_side("shelf.right", config_.shelf.right);
+    load_side("shelf.left", config_.shelf.left);
+    load_parameter("shelf.object_support_clearance", config_.shelf.object_support_clearance);
 
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
     // First translate along Z (which becomes the approach direction after rotation)
