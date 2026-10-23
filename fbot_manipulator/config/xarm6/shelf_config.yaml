@@ -1,0 +1,63 @@
+manipulation_task_server:
+  ros__parameters:
+    shelf:
+      # Clearance between the detected object and the lower support surface.
+      object_support_clearance: 0.004
+      bottom:
+        # Extra size of the bottom surface along the object's X axis.
+        x_padding: 0.2
+        # Extra size of the bottom surface along the object's Y axis.
+        y_padding: 0.7
+        # Thickness of the bottom collision surface.
+        thickness: 0.01
+        # X position offset of the bottom surface from the object center.
+        x_offset: 0.06
+        # Y position offset of the bottom surface from the object center.
+        y_offset: 0.0
+        # Z position offset of the bottom surface from the object's bottom.
+        z_offset: -0.02
+      top:
+        # Extra size of the top surface along the object's X axis.
+        x_padding: 0.2
+        # Extra size of the top surface along the object's Y axis.
+        y_padding: 0.7
+        # Thickness of the top collision surface.
+        thickness: 0.01
+        # X position offset of the top surface from the object center.
+        x_offset: 0.06
+        # Y position offset of the top surface from the object center.
+        y_offset: 0.0
+        # Z position offset of the top surface from the object's top.
+        z_offset: 0.2
+      right:
+        # Thickness of the right side collision surface along X.
+        x_thickness: 0.01
+        # Extra size of the right surface along Y.
+        y_padding: 0.3
+        # Extra size of the right surface along Z.
+        z_padding: 0.2
+        # Gap between the object's right edge and the surface.
+        x_gap: 0.01
+        # Y position offset of the right surface from the object center.
+        y_offset: 0.2
+        # Z position offset of the right surface from the object center.
+        z_offset: 0.10
+        # Z and W components of the right surface orientation quaternion.
+        orientation_z: 0.70710678
+        orientation_w: 0.70710678
+      left:
+        # Thickness of the left side collision surface along X.
+        x_thickness: 0.01
+        # Extra size of the left surface along Y.
+        y_padding: 0.3
+        # Extra size of the left surface along Z.
+        z_padding: 0.2
+        # Gap between the object's left edge and the surface.
+        x_gap: 0.01
+        # Y position offset of the left surface from the object center.
+        y_offset: -0.15
+        # Z position offset of the left surface from the object center.
+        z_offset: 0.10
+        # Z and W components of the left surface orientation quaternion.
+        orientation_z: -0.70710678
+        orientation_w: 0.70710678

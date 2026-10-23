@@ -169,14 +169,14 @@ bool MtcPlaceTask::buildTask()
             task_.add(std::move(stage));
         }
 
-        // Detach object
+         // Detach object
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
             stage->detachObject(object_id_, config_.hand_frame);
             task_.add(std::move(stage));
         }
 
-        // Remove collision object
+         // Remove collision object
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("remove object");
             stage->removeObject(object_id_);

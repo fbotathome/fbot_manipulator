@@ -10,7 +10,7 @@
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
-
+#include <moveit_msgs/msg/planning_scene.hpp>
 #if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp>)
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #else
@@ -21,6 +21,37 @@
 namespace fbot_manipulator
 {
 namespace mtc = moveit::task_constructor;
+
+struct ShelfSurfaceConfig
+{
+    double x_padding = 0.2;
+    double y_padding = 0.7;
+    double thickness = 0.01;
+    double x_offset = 0.06;
+    double y_offset = 0.0;
+    double z_offset = 0.0;
+};
+
+struct ShelfSideConfig
+{
+    double x_thickness = 0.01;
+    double y_padding = 0.3;
+    double z_padding = 0.2;
+    double x_gap = 0.01;
+    double y_offset = 0.2;
+    double z_offset = 0.10;
+    double orientation_z = 0.70710678;
+    double orientation_w = 0.70710678;
+};
+
+struct ShelfConfig
+{
+    ShelfSurfaceConfig bottom;
+    ShelfSurfaceConfig top{0.2, 0.7, 0.01, 0.06, 0.0, 0.2};
+    ShelfSideConfig right;
+    ShelfSideConfig left{0.01, 0.3, 0.2, 0.01, -0.15, 0.10, -0.70710678, 0.70710678};
+    double object_support_clearance = 0.004;
+};
 
 struct MtcConfig
 {
@@ -42,6 +73,9 @@ struct MtcConfig
     double pour_above_offset = 0.15;
     double pour_wait_time = 5.0;
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
+    double support_height = 0.01;
+    bool enable_surfaces = true;
+    ShelfConfig shelf;
 };
 
 class MtcTask
@@ -60,6 +94,29 @@ public:
                             const geometry_msgs::msg::Vector3& size);
 
     void removeCollisionObject(const std::string& object_id);
+
+    void setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
+                        const geometry_msgs::msg::Vector3& size);
+
+
+    // Functions to add and remove the collision surfaces
+    void createSupportSurface(const std::string& object_id);
+    
+    void createTopSupportSurface(const std::string& object_id);
+
+    void createRightSupportSurface(const std::string& object_id);
+    
+    void removeRightSupportSurface(const std::string& object_id);
+
+    void createLeftSupportSurface(const std::string& object_id);
+
+    void removeLeftSupportSurface(const std::string& object_id);
+
+    void removeTopSupportSurface(const std::string& object_id);
+
+    void removeSupportSurface(const std::string& object_id);
+
+    
 
     virtual bool buildTask() = 0;
 
@@ -82,6 +139,11 @@ protected:
     std::shared_ptr<mtc::solvers::JointInterpolationPlanner> joint_planner_;
 
     moveit::planning_interface::PlanningSceneInterface psi_;
+    rclcpp::Publisher<moveit_msgs::msg::PlanningScene>::SharedPtr planning_scene_pub_;
+
+    geometry_msgs::msg::Pose object_pose_;
+    geometry_msgs::msg::Vector3 object_size_;
+    bool has_surface_info_ = false;
 
     rclcpp::Logger logger() const { return node_->get_logger(); }
 };

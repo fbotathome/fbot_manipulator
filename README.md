@@ -82,7 +82,8 @@ fbot_manipulator/
 ├── config/
 │   └── xarm6/
 │       ├── manipulator_config.yaml  # Motion primitives config
-│       └── mtc_config.yaml          # MTC task config
+│       ├── mtc_config.yaml          # MTC task config
+│       └── shelf_config.yaml        # Collision shelf geometry
 └── launch/
     └── manipulator_interface.launch.py
 
@@ -177,6 +178,14 @@ manipulation_task_server:
       pour_wait_time: 2.0      # seconds - wait time during pouring
 ```
 
+### `shelf_config.yaml` (Collision Shelf Geometry)
+
+The collision surfaces created around detected objects are configured separately
+from the MTC task parameters. Values are grouped by surface (`bottom`, `top`,
+`right`, and `left`) and can be adjusted per arm type without changing code.
+The launch file loads `config/<arm_type>/shelf_config.yaml` for the
+`manipulation_task_server`.
+
 
 ## Requirements
 
@@ -197,7 +206,17 @@ sudo apt-get install ros-humble-moveit-core ros-humble-moveit-ros-planning ros-h
 colcon build --packages-select fbot_manipulator_msgs fbot_manipulator
 ```
 
-### Launch
+### Launch with collision surfaces
+
+```bash
+# 1. Launch MoveIt with MTC support (xArm example)
+ros2 launch xarm_moveit_config xarm6_moveit_fake.launch.py add_gripper:=true add_mtc:=true
+
+# 2. Launch fbot_manipulator nodes (in a new terminal)
+ros2 launch fbot_manipulator manipulator_interface.launch.py arm_type:=xarm6 enable_surfaces:=true
+```
+
+### Launch without collision surfaces
 
 ```bash
 # 1. Launch MoveIt with MTC support (xArm example)
