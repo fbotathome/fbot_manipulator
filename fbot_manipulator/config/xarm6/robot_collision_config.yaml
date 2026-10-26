@@ -1,0 +1,21 @@
+manipulation_task_server:
+  ros__parameters:
+    boris_robot:
+      base:
+        # Dimensions of the BORIS base collision box (meters)
+        size_x: 0.577045
+        size_y: 0.434
+        size_z: 0.493089
+        # Offset relative to the robot collision frame (e.g., link_base)
+        offset_x: -0.102573
+        offset_y: 0.0
+        offset_z: -0.25
+      torso:
+        # Dimensions of the BORIS torso collision box (meters)
+        size_x: 0.234
+        size_y: 0.274
+        size_z: 0.8
+        # Offset relative to the robot collision frame (e.g., link_base)
+        offset_x: -0.237573
+        offset_y: 0.0
+        offset_z: 0.3485

@@ -82,7 +82,8 @@ fbot_manipulator/
 ├── config/
 │   └── xarm6/
 │       ├── manipulator_config.yaml  # Motion primitives config
-│       └── mtc_config.yaml          # MTC task config
+│       ├── mtc_config.yaml          # MTC task config
+│       └── shelf_config.yaml        # Collision shelf geometry
 └── launch/
     └── manipulator_interface.launch.py
 
@@ -179,11 +180,19 @@ manipulation_task_server:
       pour_wait_time: 2.0      # seconds - wait time during pouring
 ```
 
+### `shelf_config.yaml` (Collision Shelf Geometry)
+
+The collision surfaces created around detected objects are configured separately
+from the MTC task parameters. Values are grouped by surface (`bottom`, `top`,
+`right`, and `left`) and can be adjusted per arm type without changing code.
+The launch file loads `config/<arm_type>/shelf_config.yaml` for the
+`manipulation_task_server`.
+
 During each manipulation task, the task server adds the BORIS v2 base and torso
-collision boxes to the MoveIt planning scene using `arm_mount_link` as their
+collision boxes to the MoveIt planning scene using `link_base` (or `arm_mount_link`) as their
 reference frame. The object is removed on task completion, failure, or
-cancellation. The active TF/planning-scene setup must publish the shared
-`arm_mount_link` frame.
+cancellation (unless `persistent_robot_collision` is enabled). The active TF/planning-scene
+setup must publish the shared reference frame.
 
 
 ## Requirements

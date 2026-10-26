@@ -61,6 +61,12 @@ def generate_launch_description():
     mtc_config = PathJoinSubstitution([
         pkg_share, "config", arm_type, "mtc_config.yaml"
     ])
+    shelf_config = PathJoinSubstitution([
+        pkg_share, "config", arm_type, "shelf_config.yaml"
+    ])
+    robot_collision_config = PathJoinSubstitution([
+        pkg_share, "config", arm_type, "robot_collision_config.yaml"
+    ])
 
     # ---- Load MoveIt configs from xarm_moveit_config ----
     # These are needed so the MTC node can plan and execute independently
@@ -144,6 +150,8 @@ def generate_launch_description():
         name="manipulation_task_server",
         parameters=[
             mtc_config,
+            shelf_config,
+            robot_collision_config,
             {"mtc.enable_surfaces": enable_surfaces},
             {"robot_description_kinematics": kinematics_yaml},
             {"robot_description_planning": joint_limits_yaml},

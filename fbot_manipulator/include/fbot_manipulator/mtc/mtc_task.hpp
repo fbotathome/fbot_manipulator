@@ -24,6 +24,53 @@ namespace fbot_manipulator
 {
 namespace mtc = moveit::task_constructor;
 
+struct ShelfSurfaceConfig
+{
+    double x_padding = 0.2;
+    double y_padding = 0.7;
+    double thickness = 0.01;
+    double x_offset = 0.06;
+    double y_offset = 0.0;
+    double z_offset = 0.0;
+};
+
+struct ShelfSideConfig
+{
+    double x_thickness = 0.01;
+    double y_padding = 0.3;
+    double z_padding = 0.2;
+    double x_gap = 0.01;
+    double y_offset = 0.2;
+    double z_offset = 0.10;
+    double orientation_z = 0.70710678;
+    double orientation_w = 0.70710678;
+};
+
+struct ShelfConfig
+{
+    ShelfSurfaceConfig bottom;
+    ShelfSurfaceConfig top{0.2, 0.7, 0.01, 0.06, 0.0, 0.2};
+    ShelfSideConfig right;
+    ShelfSideConfig left{0.01, 0.3, 0.2, 0.01, -0.15, 0.10, -0.70710678, 0.70710678};
+    double object_support_clearance = 0.004;
+};
+
+struct RobotBoxConfig
+{
+    double size_x = 0.577045;
+    double size_y = 0.434;
+    double size_z = 0.493089;
+    double offset_x = -0.102573;
+    double offset_y = 0.0;
+    double offset_z = -0.25;
+};
+
+struct RobotCollisionConfig
+{
+    RobotBoxConfig base{0.577045, 0.434, 0.493089, -0.102573, 0.0, -0.25};
+    RobotBoxConfig torso{0.234, 0.274, 0.8, -0.237573, 0.0, 0.3485};
+};
+
 struct MtcConfig
 {
     std::string arm_group_name = "xarm6";
@@ -49,6 +96,8 @@ struct MtcConfig
     std::string robot_collision_frame = "link_base";
     std::string robot_collision_id = "boris_robot";
     bool persistent_robot_collision = false;
+    RobotCollisionConfig robot_collision;
+    ShelfConfig shelf;
 };
 
 class MtcTask
