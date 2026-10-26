@@ -155,29 +155,6 @@ void MtcTask::addCollisionObject(const std::string& object_id,
                     task_name_.c_str());
         return;
     }
-
-    // Add small support object underneath the detected object so the planner
-    // treats the supporting surface as an obstacle and avoids penetrating it.
-    moveit_msgs::msg::CollisionObject support;
-    support.id = object_id + std::string("_support");
-    support.header.frame_id = config_.world_frame;
-    support.primitives.resize(1);
-    support.primitives[0].type = shape_msgs::msg::SolidPrimitive::BOX;
-    support.primitives[0].dimensions = { size.x, size.y, config_.support_height };
-    geometry_msgs::msg::Pose support_pose = pose;
-    support_pose.position.z = pose.position.z - (size.z / 2.0) -
-                              (config_.support_height / 2.0) -
-                              config_.shelf.object_support_clearance;
-    support.pose = support_pose;
-
-    psi_.applyCollisionObject(support);
-    if (planning_scene_pub_) {
-        moveit_msgs::msg::PlanningScene ps2;
-        ps2.world.collision_objects.push_back(support);
-        ps2.is_diff = true;
-        planning_scene_pub_->publish(ps2);
-    }
-
     RCLCPP_INFO(logger(), "[MtcTask:%s] Added collision object '%s' at (%.2f, %.2f, %.2f) size (%.2f, %.2f, %.2f)",
                 task_name_.c_str(), object_id.c_str(),
                 pose.position.x, pose.position.y, pose.position.z,
