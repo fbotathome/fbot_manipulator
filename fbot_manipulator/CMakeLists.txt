@@ -73,6 +73,7 @@ ament_target_dependencies(manipulation_task_server
   moveit_task_constructor_msgs
   tf2_geometry_msgs
   tf2_eigen
+  tf2_ros
   fbot_manipulator_msgs
 )
 

@@ -11,6 +11,8 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <moveit_msgs/msg/planning_scene.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 #if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp>)
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #else
@@ -44,8 +46,9 @@ struct MtcConfig
     Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
     double support_height = 0.01;
     bool enable_surfaces = true;
-    std::string robot_collision_frame = "arm_mount_link";
+    std::string robot_collision_frame = "link_base";
     std::string robot_collision_id = "boris_robot";
+    bool persistent_robot_collision = false;
 };
 
 class MtcTask
@@ -58,6 +61,10 @@ public:
     virtual ~MtcTask() = default;
 
     void loadConfig();
+
+    const MtcConfig& getConfig() const { return config_; }
+
+    std::string resolveRobotCollisionFrame();
 
     void addCollisionObject(const std::string& object_id,
                             const geometry_msgs::msg::Pose& pose,
@@ -118,6 +125,9 @@ protected:
     geometry_msgs::msg::Pose object_pose_;
     geometry_msgs::msg::Vector3 object_size_;
     bool has_surface_info_ = false;
+
+    std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
     rclcpp::Logger logger() const { return node_->get_logger(); }
 };

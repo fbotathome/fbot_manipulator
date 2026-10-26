@@ -6,8 +6,9 @@ manipulation_task_server:
       hand_frame: "link_tcp"
       world_frame: "world"
       surface_link: "world"
-      robot_collision_frame: "arm_mount_link"
+      robot_collision_frame: "link_base"
       robot_collision_id: "boris_robot"
+      persistent_robot_collision: false
       approach_min: 0.05
       approach_max: 0.15
       lift_min: 0.05

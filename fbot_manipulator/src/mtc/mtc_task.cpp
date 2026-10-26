@@ -11,6 +11,8 @@ MtcTask::MtcTask(const std::string& task_name,
     : task_name_(task_name),
       node_(node)
 {
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node_->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
     loadConfig();
     setupSolvers();
     planning_scene_pub_ = node_->create_publisher<moveit_msgs::msg::PlanningScene>(
@@ -49,6 +51,9 @@ void MtcTask::loadConfig()
     node_->get_parameter_or("mtc.robot_collision_id",
                             config_.robot_collision_id,
                             config_.robot_collision_id);
+    node_->get_parameter_or("mtc.persistent_robot_collision",
+                            config_.persistent_robot_collision,
+                            config_.persistent_robot_collision);
 
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
     // First translate along Z (which becomes the approach direction after rotation)
@@ -149,12 +154,50 @@ void MtcTask::removeCollisionObject(const std::string& object_id)
                 task_name_.c_str(), object_id.c_str());
 }
 
+std::string MtcTask::resolveRobotCollisionFrame()
+{
+    const std::string& preferred = config_.robot_collision_frame;
+
+    // Check if the configured frame is available in TF (wait up to 100ms)
+    if (!preferred.empty() && tf_buffer_->canTransform(config_.world_frame, preferred, tf2::TimePointZero, tf2::durationFromSec(0.1))) {
+        return preferred;
+    }
+
+    // If preferred frame is not found, fallback to "link_base" if it exists
+    if (preferred != "link_base" && tf_buffer_->canTransform(config_.world_frame, "link_base", tf2::TimePointZero, tf2::durationFromSec(0.1))) {
+        RCLCPP_WARN(logger(),
+                    "[MtcTask:%s] Configured robot_collision_frame '%s' not found in TF; falling back to 'link_base'",
+                    task_name_.c_str(), preferred.c_str());
+        return "link_base";
+    }
+
+    // Otherwise fallback to world_frame
+    if (preferred != config_.world_frame) {
+        RCLCPP_WARN(logger(),
+                    "[MtcTask:%s] Neither '%s' nor 'link_base' found in TF; falling back to world frame '%s'",
+                    task_name_.c_str(), preferred.c_str(), config_.world_frame.c_str());
+    }
+    return config_.world_frame;
+}
+
 void MtcTask::addRobotCollisionObject()
 {
+    std::string frame = resolveRobotCollisionFrame();
+
     moveit_msgs::msg::CollisionObject object;
     object.id = config_.robot_collision_id;
-    object.header.frame_id = config_.robot_collision_frame;
+    object.header.frame_id = frame;
+    object.header.stamp = node_->now();
     object.operation = moveit_msgs::msg::CollisionObject::ADD;
+
+    // Explicitly set identity pose for the root collision object
+    object.pose.position.x = 0.0;
+    object.pose.position.y = 0.0;
+    object.pose.position.z = 0.0;
+    object.pose.orientation.x = 0.0;
+    object.pose.orientation.y = 0.0;
+    object.pose.orientation.z = 0.0;
+    object.pose.orientation.w = 1.0;
 
     // Collision boxes and poses are derived from fbot_description/urdf/v2/robot.xacro.
     shape_msgs::msg::SolidPrimitive base;
@@ -176,7 +219,12 @@ void MtcTask::addRobotCollisionObject()
     object.primitives = {base, torso};
     object.primitive_poses = {base_pose, torso_pose};
 
-    psi_.applyCollisionObject(object);
+    if (!psi_.applyCollisionObject(object)) {
+        RCLCPP_WARN(logger(),
+                    "[MtcTask:%s] Failed to apply robot collision object '%s' via PlanningSceneInterface",
+                    task_name_.c_str(), config_.robot_collision_id.c_str());
+    }
+
     if (planning_scene_pub_) {
         moveit_msgs::msg::PlanningScene planning_scene;
         planning_scene.world.collision_objects.push_back(object);
@@ -187,17 +235,31 @@ void MtcTask::addRobotCollisionObject()
     RCLCPP_INFO(logger(), "[MtcTask:%s] Added robot collision object '%s' in frame '%s'",
                 task_name_.c_str(),
                 config_.robot_collision_id.c_str(),
-                config_.robot_collision_frame.c_str());
+                frame.c_str());
 }
 
 void MtcTask::removeRobotCollisionObject()
 {
+    std::string frame = resolveRobotCollisionFrame();
+
     moveit_msgs::msg::CollisionObject object;
     object.id = config_.robot_collision_id;
-    object.header.frame_id = config_.robot_collision_frame;
+    object.header.frame_id = frame;
+    object.header.stamp = node_->now();
     object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
 
-    psi_.applyCollisionObject(object);
+    if (!psi_.applyCollisionObject(object)) {
+        RCLCPP_WARN(logger(),
+                    "[MtcTask:%s] Failed to remove robot collision object '%s' via PlanningSceneInterface",
+                    task_name_.c_str(), config_.robot_collision_id.c_str());
+    }
+
+    if (planning_scene_pub_) {
+        moveit_msgs::msg::PlanningScene planning_scene;
+        planning_scene.world.collision_objects.push_back(object);
+        planning_scene.is_diff = true;
+        planning_scene_pub_->publish(planning_scene);
+    }
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed robot collision object '%s'",
                 task_name_.c_str(), config_.robot_collision_id.c_str());

@@ -132,7 +132,9 @@ private:
             mtc_task->removeTopSupportSurface(object_id);
             mtc_task->removeRightSupportSurface(object_id);
             mtc_task->removeLeftSupportSurface(object_id);
-            mtc_task->removeRobotCollisionObject();
+            if (!mtc_task->getConfig().persistent_robot_collision) {
+                mtc_task->removeRobotCollisionObject();
+            }
         };
 
         // Check cancellation
