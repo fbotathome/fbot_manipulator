@@ -52,6 +52,7 @@ struct ShelfConfig
     ShelfSurfaceConfig top{0.2, 0.7, 0.01, 0.06, 0.0, 0.2};
     ShelfSideConfig right;
     ShelfSideConfig left{0.01, 0.3, 0.2, 0.01, -0.15, 0.10, -0.70710678, 0.70710678};
+    double rotation_yaw = 0.0;
     double object_support_clearance = 0.004;
 };
 

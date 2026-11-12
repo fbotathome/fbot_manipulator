@@ -21,4 +21,4 @@ manipulation_task_server:
       pour_side_offset: 0.10
       pour_above_offset: 0.15
       pour_wait_time: 2.0
-      grasp_offset: -0.01
+      grasp_offset: -0.02

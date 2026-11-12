@@ -187,6 +187,8 @@ from the MTC task parameters. Values are grouped by surface (`bottom`, `top`,
 `right`, and `left`) and can be adjusted per arm type without changing code.
 The launch file loads `config/<arm_type>/shelf_config.yaml` for the
 `manipulation_task_server`.
+Set `shelf.rotation_yaw` in that file to rotate the complete shelf around the
+detected object; `1.57079633` rotates it 90 degrees counter-clockwise about Z.
 
 During each manipulation task, the task server adds the BORIS v2 base and torso
 collision boxes to the MoveIt planning scene using `link_base` (or `arm_mount_link`) as their

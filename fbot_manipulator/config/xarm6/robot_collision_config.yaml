@@ -16,6 +16,6 @@ manipulation_task_server:
         size_y: 0.274
         size_z: 0.8
         # Offset relative to the robot collision frame (e.g., link_base)
-        offset_x: -0.237573
+        offset_x: -0.217573
         offset_y: 0.0
         offset_z: 0.36

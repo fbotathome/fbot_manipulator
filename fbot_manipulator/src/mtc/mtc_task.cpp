@@ -2,6 +2,7 @@
 #include <moveit_msgs/msg/planning_scene.hpp>
 
 #include <chrono>
+#include <cmath>
 
 namespace fbot_manipulator
 {
@@ -90,6 +91,7 @@ void MtcTask::loadConfig()
     load_surface("shelf.top", config_.shelf.top);
     load_side("shelf.right", config_.shelf.right);
     load_side("shelf.left", config_.shelf.left);
+    load_parameter("shelf.rotation_yaw", config_.shelf.rotation_yaw);
     load_parameter("shelf.object_support_clearance", config_.shelf.object_support_clearance);
 
     config_.grasp_frame_transform = Eigen::Isometry3d::Identity();
@@ -120,6 +122,10 @@ void MtcTask::setupSolvers()
     cartesian_planner_->setMaxVelocityScalingFactor(0.5);
     cartesian_planner_->setMaxAccelerationScalingFactor(0.5);
     cartesian_planner_->setStepSize(0.002);
+    // Grasps near a wrist singularity move the wrist joints several times faster in the first
+    // millimetres than on average; the default relative threshold (1.5) cuts those paths after
+    // 1-2 waypoints. 10x still rejects real IK flips (a pi wrist flip is ~75x the mean step).
+    cartesian_planner_->setJumpThreshold(10.0);
 
     joint_planner_ = std::make_shared<mtc::solvers::JointInterpolationPlanner>();
 }
@@ -331,14 +337,20 @@ void MtcTask::createSupportSurface(const std::string& object_id)
         config_.shelf.bottom.thickness;
 
     geometry_msgs::msg::Pose support_pose;
-    support_pose.position.x = object_pose_.position.x + config_.shelf.bottom.x_offset;
-    support_pose.position.y = object_pose_.position.y + config_.shelf.bottom.y_offset;
+    const double cos_yaw = std::cos(config_.shelf.rotation_yaw);
+    const double sin_yaw = std::sin(config_.shelf.rotation_yaw);
+    support_pose.position.x =
+        object_pose_.position.x + cos_yaw * config_.shelf.bottom.x_offset -
+        sin_yaw * config_.shelf.bottom.y_offset;
+    support_pose.position.y =
+        object_pose_.position.y + sin_yaw * config_.shelf.bottom.x_offset +
+        cos_yaw * config_.shelf.bottom.y_offset;
     support_pose.position.z = object_pose_.position.z - (object_size_.z / 2.0) +
                               config_.shelf.bottom.z_offset;
     support_pose.orientation.x = 0.0;
     support_pose.orientation.y = 0.0;
-    support_pose.orientation.z = 0.0;
-    support_pose.orientation.w = 1.0;
+    support_pose.orientation.z = std::sin(config_.shelf.rotation_yaw / 2.0);
+    support_pose.orientation.w = std::cos(config_.shelf.rotation_yaw / 2.0);
     support_obj.primitives.push_back(primitive);
     support_obj.primitive_poses.push_back(support_pose);
     support_obj.operation = moveit_msgs::msg::CollisionObject::ADD;
@@ -377,14 +389,20 @@ void MtcTask::createTopSupportSurface(const std::string& object_id)
         config_.shelf.top.thickness;
 
     geometry_msgs::msg::Pose support_pose_top;
-    support_pose_top.position.x = object_pose_.position.x + config_.shelf.top.x_offset;
-    support_pose_top.position.y = object_pose_.position.y + config_.shelf.top.y_offset;
+    const double cos_yaw = std::cos(config_.shelf.rotation_yaw);
+    const double sin_yaw = std::sin(config_.shelf.rotation_yaw);
+    support_pose_top.position.x =
+        object_pose_.position.x + cos_yaw * config_.shelf.top.x_offset -
+        sin_yaw * config_.shelf.top.y_offset;
+    support_pose_top.position.y =
+        object_pose_.position.y + sin_yaw * config_.shelf.top.x_offset +
+        cos_yaw * config_.shelf.top.y_offset;
     support_pose_top.position.z = object_pose_.position.z + (object_size_.z / 2.0) +
                                   config_.shelf.top.z_offset;
     support_pose_top.orientation.x = 0.0;
     support_pose_top.orientation.y = 0.0;
-    support_pose_top.orientation.z = 0.0;
-    support_pose_top.orientation.w = 1.0;
+    support_pose_top.orientation.z = std::sin(config_.shelf.rotation_yaw / 2.0);
+    support_pose_top.orientation.w = std::cos(config_.shelf.rotation_yaw / 2.0);
     support_obj_top.primitives.push_back(primitive_top);
     support_obj_top.primitive_poses.push_back(support_pose_top);
     support_obj_top.operation = moveit_msgs::msg::CollisionObject::ADD;
@@ -421,14 +439,22 @@ void MtcTask::createRightSupportSurface(const std::string& object_id) {
         object_size_.z + config_.shelf.right.z_padding;
 
     geometry_msgs::msg::Pose support_pose_right;
-    support_pose_right.position.x = object_pose_.position.x + (object_size_.x / 2.0) +
-                                    config_.shelf.right.x_gap;
-    support_pose_right.position.y = object_pose_.position.y + config_.shelf.right.y_offset;
+    const double cos_yaw = std::cos(config_.shelf.rotation_yaw);
+    const double sin_yaw = std::sin(config_.shelf.rotation_yaw);
+    const double right_x = (object_size_.x / 2.0) + config_.shelf.right.x_gap;
+    const double right_y = config_.shelf.right.y_offset;
+    support_pose_right.position.x =
+        object_pose_.position.x + cos_yaw * right_x - sin_yaw * right_y;
+    support_pose_right.position.y =
+        object_pose_.position.y + sin_yaw * right_x + cos_yaw * right_y;
     support_pose_right.position.z = object_pose_.position.z + config_.shelf.right.z_offset;
-    support_pose_right.orientation.x = 0.0;
-    support_pose_right.orientation.y = 0.0;
-    support_pose_right.orientation.z = config_.shelf.right.orientation_z;
-    support_pose_right.orientation.w = config_.shelf.right.orientation_w;
+    tf2::Quaternion right_orientation;
+    right_orientation.setRPY(0.0, 0.0, config_.shelf.rotation_yaw);
+    right_orientation *= tf2::Quaternion(0.0, 0.0,
+                                          config_.shelf.right.orientation_z,
+                                          config_.shelf.right.orientation_w);
+    right_orientation.normalize();
+    support_pose_right.orientation = tf2::toMsg(right_orientation);
 
     support_obj_right.primitives.push_back(primitive_right);
     support_obj_right.primitive_poses.push_back(support_pose_right);
@@ -467,15 +493,22 @@ void MtcTask::createLeftSupportSurface(const std::string& object_id) {
         object_size_.z + config_.shelf.left.z_padding;
 
     geometry_msgs::msg::Pose support_pose_left;
-    // Keep the left support on the side opposite the right support.
-    support_pose_left.position.x = object_pose_.position.x - (object_size_.x / 2.0) -
-                                   config_.shelf.left.x_gap;
-    support_pose_left.position.y = object_pose_.position.y + config_.shelf.left.y_offset;
+    const double cos_yaw = std::cos(config_.shelf.rotation_yaw);
+    const double sin_yaw = std::sin(config_.shelf.rotation_yaw);
+    const double left_x = -(object_size_.x / 2.0) - config_.shelf.left.x_gap;
+    const double left_y = config_.shelf.left.y_offset;
+    support_pose_left.position.x =
+        object_pose_.position.x + cos_yaw * left_x - sin_yaw * left_y;
+    support_pose_left.position.y =
+        object_pose_.position.y + sin_yaw * left_x + cos_yaw * left_y;
     support_pose_left.position.z = object_pose_.position.z + config_.shelf.left.z_offset;
-    support_pose_left.orientation.x = 0.0;
-    support_pose_left.orientation.y = 0.0;
-    support_pose_left.orientation.z = config_.shelf.left.orientation_z;
-    support_pose_left.orientation.w = config_.shelf.left.orientation_w;
+    tf2::Quaternion left_orientation;
+    left_orientation.setRPY(0.0, 0.0, config_.shelf.rotation_yaw);
+    left_orientation *= tf2::Quaternion(0.0, 0.0,
+                                         config_.shelf.left.orientation_z,
+                                         config_.shelf.left.orientation_w);
+    left_orientation.normalize();
+    support_pose_left.orientation = tf2::toMsg(left_orientation);
 
     support_obj_left.primitives.push_back(primitive_left);
     support_obj_left.primitive_poses.push_back(support_pose_left);

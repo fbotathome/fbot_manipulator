@@ -43,6 +43,30 @@ bool MtcPickAndPlaceTask::buildTask()
         task_.add(std::move(stage));
     }
 
+    // ---- Grasp IK scene ----
+    // Grasp candidates are generated from this stage's scene, where the arm and gripper may touch
+    // the object. Grasp IK can then reject poses that hit anything else (shelf, robot body).
+    // The next stage restores the original collision rules for the rest of the task.
+    mtc::Stage* grasp_ik_scene = nullptr;
+    {
+        std::vector<std::string> robot_links =
+            task_.getRobotModel()->getJointModelGroup(config_.arm_group_name)->getLinkModelNamesWithCollisionGeometry();
+        const auto& hand_links =
+            task_.getRobotModel()->getJointModelGroup(config_.hand_group_name)->getLinkModelNamesWithCollisionGeometry();
+        robot_links.insert(robot_links.end(), hand_links.begin(), hand_links.end());
+
+        auto allow = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision for grasp IK");
+        allow->allowCollisions(object_id_, robot_links, true);
+        allow->allowCollisions(config_.robot_collision_id, {"link_base"}, true);
+        grasp_ik_scene = allow.get();
+        task_.add(std::move(allow));
+
+        auto forbid = std::make_unique<mtc::stages::ModifyPlanningScene>("restore collision after grasp IK");
+        forbid->allowCollisions(object_id_, robot_links, false);
+        forbid->allowCollisions(config_.robot_collision_id, {"link_base"}, false);
+        task_.add(std::move(forbid));
+    }
+
     // ---- Open Gripper ----
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("open gripper", joint_planner_);
@@ -73,6 +97,12 @@ bool MtcPickAndPlaceTask::buildTask()
         // Approach
         {
             auto allow_collision = std::make_unique<mtc::stages::ModifyPlanningScene>("allow base collision during approach");
+            // The gripper may touch the object while approaching the grasp pose
+            allow_collision->allowCollisions(object_id_,
+                                             task_.getRobotModel()
+                                                 ->getJointModelGroup(config_.hand_group_name)
+                                                 ->getLinkModelNamesWithCollisionGeometry(),
+                                             true);
             allow_collision->allowCollisions(config_.robot_collision_id,
                                              {"link_base"},
                                              true);
@@ -99,7 +129,7 @@ bool MtcPickAndPlaceTask::buildTask()
             stage->setPreGraspPose("open");
             stage->setObject(object_id_);
             stage->setAngleDelta(config_.grasp_angle_delta);
-            stage->setMonitoredStage(current_state);
+            stage->setMonitoredStage(grasp_ik_scene);
 
             auto wrapper = std::make_unique<mtc::stages::ComputeIK>("grasp pose IK", std::move(stage));
             wrapper->setMaxIKSolutions(8);

@@ -43,7 +43,7 @@ class SaveArmPose(Node):
 
     def set_arm_mode(self, mode):
         """@brief Set the physical xArm control mode and ready state."""
-        self.arm = XArmAPI("192.168.1.208")
+        self.arm = XArmAPI("192.168.4.208")
         self.arm.set_mode(mode)  # Set to position control mode
         self.arm.set_state(0)  # Set to ready state
         

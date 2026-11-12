@@ -1,6 +1,8 @@
 manipulation_task_server:
   ros__parameters:
     shelf:
+      # Rotate the complete shelf around the detected object, counter-clockwise about Z.
+      rotation_yaw: 1.57079633
       # Clearance between the detected object and the lower support surface.
       object_support_clearance: 0.004
       bottom:
@@ -43,8 +45,8 @@ manipulation_task_server:
         # Z position offset of the right surface from the object center.
         z_offset: 0.10
         # Z and W components of the right surface orientation quaternion.
-        orientation_z: 0.70710678
-        orientation_w: 0.70710678
+        orientation_z: 1.0
+        orientation_w: 1.0
       left:
         # Thickness of the left side collision surface along X.
         x_thickness: 0.01
@@ -59,5 +61,5 @@ manipulation_task_server:
         # Z position offset of the left surface from the object center.
         z_offset: 0.10
         # Z and W components of the left surface orientation quaternion.
-        orientation_z: -0.70710678
-        orientation_w: 0.70710678
+        orientation_z: -1.0
+        orientation_w: 1.0
