@@ -20,3 +20,13 @@ manipulation_task_server:
       pour_above_offset: 0.15
       pour_wait_time: 2.0
       grasp_offset: -0.02
+      # Post-pick grasp check: after a PICK, abort if the gripper joint stopped within min_gap of
+      # closed_position (closed on nothing).
+      # TODO: PLACEHOLDER VALUES - measure closed_position / min_gap on the real gripper, then
+      # set enabled: true.
+      grasp_check:
+        enabled: false
+        topic: "/joint_states"
+        finger_joint: "drive_joint"
+        closed_position: 0.85     # drive_joint when fully closed on nothing (placeholder)
+        min_gap: 0.02             # min distance from closed_position to count as holding (placeholder)

@@ -108,6 +108,11 @@ public:
 
     void removeCollisionObject(const std::string& object_id);
 
+    // Detach the object from the gripper (if attached) and delete it from the planning scene.
+    // Used after a failed grasp check so the scene does not keep a phantom object the robot is
+    // not actually holding. Safe to call whether or not the object is attached.
+    void detachAndRemoveObject(const std::string& object_id);
+
     void addRobotCollisionObject();
 
     void removeRobotCollisionObject();

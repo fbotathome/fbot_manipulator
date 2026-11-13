@@ -1,5 +1,6 @@
 #include "fbot_manipulator/mtc/mtc_task.hpp"
 #include <moveit_msgs/msg/planning_scene.hpp>
+#include <moveit_msgs/msg/attached_collision_object.hpp>
 
 #include <chrono>
 #include <cmath>
@@ -174,6 +175,19 @@ void MtcTask::removeCollisionObject(const std::string& object_id)
 
     RCLCPP_INFO(logger(), "[MtcTask:%s] Removed collision object '%s'",
                 task_name_.c_str(), object_id.c_str());
+}
+
+void MtcTask::detachAndRemoveObject(const std::string& object_id)
+{
+    // An attached body cannot be deleted by a plain world REMOVE: detach it first (this returns
+    // it to the world at its current pose), then delete it from the world.
+    moveit_msgs::msg::AttachedCollisionObject detach;
+    detach.link_name = config_.hand_frame;
+    detach.object.id = object_id;
+    detach.object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+    psi_.applyAttachedCollisionObject(detach);
+
+    removeCollisionObject(object_id);
 }
 
 std::string MtcTask::resolveRobotCollisionFrame()
