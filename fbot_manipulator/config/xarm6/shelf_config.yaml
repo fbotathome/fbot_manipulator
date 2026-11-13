@@ -17,7 +17,7 @@ manipulation_task_server:
         # Y position offset of the bottom surface from the object center.
         y_offset: 0.0
         # Z position offset of the bottom surface from the object's bottom.
-        z_offset: -0.02
+        z_offset: 0.02
       top:
         # Extra size of the top surface along the object's X axis.
         x_padding: 0.2

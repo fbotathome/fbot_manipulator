@@ -81,6 +81,7 @@ ament_target_dependencies(manipulation_task_server
   tf2_eigen
   tf2_ros
   fbot_manipulator_msgs
+  sensor_msgs
 )
 
 install(TARGETS
