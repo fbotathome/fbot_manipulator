@@ -22,11 +22,12 @@ struct RobotCollisionConfig
 {
     RobotBoxConfig base{0.577045, 0.434, 0.493089, -0.102573, 0.0, -0.25};
     RobotBoxConfig torso{0.234, 0.274, 0.8, -0.237573, 0.0, 0.3485};
+    RobotBoxConfig sick{0.125737, 0.102200, 0.152269, 0.215030, 0.0, -0.082258};
 };
 
 /**
- * @brief Read the robot body collision boxes (boris_robot.base / boris_robot.torso) from the
- *        node parameters. Missing parameters keep their defaults.
+ * @brief Read the robot body collision boxes from node parameters. Missing parameters keep
+ *        their defaults.
  */
 RobotCollisionConfig loadRobotCollisionConfig(const rclcpp::Node::SharedPtr& node);
 

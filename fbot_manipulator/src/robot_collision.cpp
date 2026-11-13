@@ -21,6 +21,7 @@ RobotCollisionConfig loadRobotCollisionConfig(const rclcpp::Node::SharedPtr& nod
 
     load_box("boris_robot.base", config.base);
     load_box("boris_robot.torso", config.torso);
+    load_box("boris_robot.sick", config.sick);
     return config;
 }
 
@@ -56,6 +57,7 @@ moveit_msgs::msg::CollisionObject makeRobotCollisionObject(const RobotCollisionC
 
     add_box(config.base);
     add_box(config.torso);
+    add_box(config.sick);
     return object;
 }
 

@@ -23,3 +23,12 @@
         offset_x: -0.217573
         offset_y: 0.0
         offset_z: 0.36
+      sick:
+        # Conservative box around the SICK LMS1xx collision mesh (meters)
+        size_x: 0.125737
+        size_y: 0.102200
+        size_z: 0.152269
+        # Offset relative to link_base; derived from fbot_description v2.yaml
+        offset_x: 0.215030
+        offset_y: 0.0
+        offset_z: -0.082258
