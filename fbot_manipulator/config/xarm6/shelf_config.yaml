@@ -2,7 +2,7 @@ manipulation_task_server:
   ros__parameters:
     shelf:
       # Rotate the complete shelf around the detected object, counter-clockwise about Z.
-      rotation_yaw: 1.57079633
+      rotation_yaw: 0.0
       # Clearance between the detected object and the lower support surface.
       object_support_clearance: 0.004
       bottom:
