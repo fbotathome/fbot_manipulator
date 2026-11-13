@@ -40,6 +40,7 @@ add_executable(manipulator_interface_node
   src/manipulator_interface_node.cpp
   src/motion_primitives/motion_primitives_base.cpp
   src/motion_primitives/motion_primitives_xarm.cpp
+  src/robot_collision.cpp
   src/utils.cpp
 )
 
@@ -52,6 +53,8 @@ ament_target_dependencies(manipulator_interface_node
   trajectory_msgs
   fbot_manipulator_msgs
   xarm_msgs
+  moveit_msgs
+  shape_msgs
   yaml-cpp
 )
 
@@ -64,6 +67,7 @@ add_executable(manipulation_task_server
   src/mtc/mtc_place_task.cpp
   src/mtc/mtc_pick_and_place_task.cpp
   src/mtc/mtc_pour_task.cpp
+  src/robot_collision.cpp
 )
 
 ament_target_dependencies(manipulation_task_server

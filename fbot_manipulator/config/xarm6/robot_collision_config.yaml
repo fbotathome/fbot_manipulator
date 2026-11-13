@@ -1,5 +1,9 @@
-manipulation_task_server:
+# Robot body collision, shared by manipulation_task_server (MTC) and manipulator_interface (primitives)
+/**:
   ros__parameters:
+    mtc:
+      robot_collision_frame: "link_base"
+      robot_collision_id: "boris_robot"
     boris_robot:
       base:
         # Dimensions of the BORIS base collision box (meters)

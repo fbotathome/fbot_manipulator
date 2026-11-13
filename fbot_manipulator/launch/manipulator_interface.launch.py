@@ -46,6 +46,11 @@ def generate_launch_description():
     namespace = LaunchConfiguration("namespace")
     enable_surfaces = LaunchConfiguration("enable_surfaces")
 
+    # Robot body collision boxes, shared by both nodes
+    robot_collision_config = PathJoinSubstitution([
+        pkg_share, "config", arm_type, "robot_collision_config.yaml"
+    ])
+
     # Create the manipulator interface node
     manipulator_interface_node = Node(
         package="fbot_manipulator",
@@ -53,6 +58,7 @@ def generate_launch_description():
         #namespace=namespace,
         name="manipulator_interface",
         parameters=[
+            robot_collision_config,
             {"arm_type": arm_type},
         ],
     )
@@ -63,9 +69,6 @@ def generate_launch_description():
     ])
     shelf_config = PathJoinSubstitution([
         pkg_share, "config", arm_type, "shelf_config.yaml"
-    ])
-    robot_collision_config = PathJoinSubstitution([
-        pkg_share, "config", arm_type, "robot_collision_config.yaml"
     ])
 
     # ---- Load MoveIt configs from xarm_moveit_config ----

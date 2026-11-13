@@ -20,6 +20,8 @@
 #endif
 #include <tf2_eigen/tf2_eigen.hpp>
 
+#include "fbot_manipulator/robot_collision.hpp"
+
 namespace fbot_manipulator
 {
 namespace mtc = moveit::task_constructor;
@@ -54,22 +56,6 @@ struct ShelfConfig
     ShelfSideConfig left{0.01, 0.3, 0.2, 0.01, -0.15, 0.10, -0.70710678, 0.70710678};
     double rotation_yaw = 0.0;
     double object_support_clearance = 0.004;
-};
-
-struct RobotBoxConfig
-{
-    double size_x = 0.577045;
-    double size_y = 0.434;
-    double size_z = 0.493089;
-    double offset_x = -0.102573;
-    double offset_y = 0.0;
-    double offset_z = -0.25;
-};
-
-struct RobotCollisionConfig
-{
-    RobotBoxConfig base{0.577045, 0.434, 0.493089, -0.102573, 0.0, -0.25};
-    RobotBoxConfig torso{0.234, 0.274, 0.8, -0.237573, 0.0, 0.3485};
 };
 
 struct MtcConfig

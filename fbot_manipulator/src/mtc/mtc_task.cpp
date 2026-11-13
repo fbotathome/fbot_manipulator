@@ -54,17 +54,7 @@ void MtcTask::loadConfig()
     load_parameter("mtc.robot_collision_id", config_.robot_collision_id);
     load_parameter("mtc.persistent_robot_collision", config_.persistent_robot_collision);
 
-    const auto load_box = [&load_parameter](const std::string& name, RobotBoxConfig& box) {
-        load_parameter(name + ".size_x", box.size_x);
-        load_parameter(name + ".size_y", box.size_y);
-        load_parameter(name + ".size_z", box.size_z);
-        load_parameter(name + ".offset_x", box.offset_x);
-        load_parameter(name + ".offset_y", box.offset_y);
-        load_parameter(name + ".offset_z", box.offset_z);
-    };
-
-    load_box("boris_robot.base", config_.robot_collision.base);
-    load_box("boris_robot.torso", config_.robot_collision.torso);
+    config_.robot_collision = loadRobotCollisionConfig(node_);
 
     const auto load_surface = [&load_parameter](const std::string& name,
                                                  ShelfSurfaceConfig& surface) {
@@ -216,46 +206,8 @@ void MtcTask::addRobotCollisionObject()
 {
     std::string frame = resolveRobotCollisionFrame();
 
-    moveit_msgs::msg::CollisionObject object;
-    object.id = config_.robot_collision_id;
-    object.header.frame_id = frame;
-    object.header.stamp = node_->now();
-    object.operation = moveit_msgs::msg::CollisionObject::ADD;
-
-    // Explicitly set identity pose for the root collision object
-    object.pose.position.x = 0.0;
-    object.pose.position.y = 0.0;
-    object.pose.position.z = 0.0;
-    object.pose.orientation.x = 0.0;
-    object.pose.orientation.y = 0.0;
-    object.pose.orientation.z = 0.0;
-    object.pose.orientation.w = 1.0;
-
-    // Collision boxes and poses are derived from fbot_description/urdf/v2/robot.xacro (or robot_collision_config.yaml).
-    shape_msgs::msg::SolidPrimitive base;
-    base.type = shape_msgs::msg::SolidPrimitive::BOX;
-    base.dimensions = {config_.robot_collision.base.size_x,
-                       config_.robot_collision.base.size_y,
-                       config_.robot_collision.base.size_z};
-    geometry_msgs::msg::Pose base_pose;
-    base_pose.position.x = config_.robot_collision.base.offset_x;
-    base_pose.position.y = config_.robot_collision.base.offset_y;
-    base_pose.position.z = config_.robot_collision.base.offset_z;
-    base_pose.orientation.w = 1.0;
-
-    shape_msgs::msg::SolidPrimitive torso;
-    torso.type = shape_msgs::msg::SolidPrimitive::BOX;
-    torso.dimensions = {config_.robot_collision.torso.size_x,
-                        config_.robot_collision.torso.size_y,
-                        config_.robot_collision.torso.size_z};
-    geometry_msgs::msg::Pose torso_pose;
-    torso_pose.position.x = config_.robot_collision.torso.offset_x;
-    torso_pose.position.y = config_.robot_collision.torso.offset_y;
-    torso_pose.position.z = config_.robot_collision.torso.offset_z;
-    torso_pose.orientation.w = 1.0;
-
-    object.primitives = {base, torso};
-    object.primitive_poses = {base_pose, torso_pose};
+    const moveit_msgs::msg::CollisionObject object = makeRobotCollisionObject(
+        config_.robot_collision, config_.robot_collision_id, frame, node_->now());
 
     if (!psi_.applyCollisionObject(object)) {
         RCLCPP_WARN(logger(),

@@ -17,7 +17,10 @@ MotionPrimitivesXArm::MotionPrimitivesXArm(const std::string& arm_name)
 }
 
 bool MotionPrimitivesXArm::moveToNamedTarget(const std::string& target_name)
-{    
+{
+    if (!ensureRobotCollisionObject())
+        return false;
+
     bool success = move_group_->setNamedTarget(target_name);
     if (!success) {
         RCLCPP_ERROR(node_->get_logger(), "Named target '%s' not found in SRDF", target_name.c_str());

@@ -37,6 +37,38 @@ void MotionPrimitivesBase::init()
     std::copy(move_group_->getJointModelGroupNames().begin(), move_group_->getJointModelGroupNames().end(), std::ostream_iterator<std::string>(std::cout, ", "));
     move_group_->setMaxVelocityScalingFactor(max_velocity_scaling_factor);
     move_group_->setMaxAccelerationScalingFactor(max_acceleration_scaling_factor);
+
+    node_->get_parameter_or("enable_robot_collision", enable_robot_collision_, enable_robot_collision_);
+    node_->get_parameter_or("mtc.robot_collision_id", robot_collision_id_, robot_collision_id_);
+    node_->get_parameter_or("mtc.robot_collision_frame", robot_collision_frame_, robot_collision_frame_);
+    robot_collision_ = loadRobotCollisionConfig(node_);
+    psi_ = std::make_unique<moveit::planning_interface::PlanningSceneInterface>();
+
+    if (!enable_robot_collision_) {
+        RCLCPP_WARN(node_->get_logger(),
+                    "[MotionPrimitivesBase] Robot body collision is DISABLED (enable_robot_collision=false)");
+    } else if (ensureRobotCollisionObject()) {
+        RCLCPP_INFO(node_->get_logger(),
+                    "[MotionPrimitivesBase] Robot collision object '%s' added in frame '%s'",
+                    robot_collision_id_.c_str(), robot_collision_frame_.c_str());
+    }
+}
+
+bool MotionPrimitivesBase::ensureRobotCollisionObject()
+{
+    if (!enable_robot_collision_)
+        return true;
+
+    const auto object = makeRobotCollisionObject(
+        robot_collision_, robot_collision_id_, robot_collision_frame_, node_->now());
+
+    if (!psi_->applyCollisionObject(object)) {
+        RCLCPP_ERROR(node_->get_logger(),
+                     "[MotionPrimitivesBase] Failed to apply robot collision object '%s'; refusing to plan",
+                     robot_collision_id_.c_str());
+        return false;
+    }
+    return true;
 }
 
 void MotionPrimitivesBase::load_config()
@@ -149,6 +181,9 @@ bool MotionPrimitivesBase::setGripperPosition(double position)
 
 bool MotionPrimitivesBase::planJointTarget(const std::vector<double>& joint_target)
 {
+    if (!ensureRobotCollisionObject())
+        return false;
+
     bool success = move_group_->setJointValueTarget(joint_target);
     if (!success)
         RCLCPP_WARN(node_->get_logger(), "setJointValueTarget: out of bounds");
@@ -161,6 +196,9 @@ bool MotionPrimitivesBase::planJointTarget(const std::vector<double>& joint_targ
 
 bool MotionPrimitivesBase::planPoseTarget(const geometry_msgs::msg::Pose& pose_target)
 {
+    if (!ensureRobotCollisionObject())
+        return false;
+
     bool success = move_group_->setPoseTarget(pose_target);
     if (!success)
         RCLCPP_WARN(node_->get_logger(), "setPoseTarget: out of bounds");

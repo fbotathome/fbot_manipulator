@@ -15,6 +15,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 
 #include "fbot_manipulator/utils.hpp"
+#include "fbot_manipulator/robot_collision.hpp"
 
 namespace fbot_manipulator
 {
@@ -65,6 +66,14 @@ public:
     virtual bool executePath(bool wait = true);
 
 protected:
+    /*
+    * @brief Make sure the robot body collision object is in the planning scene, so plans never
+    *        go through the robot itself. Must be called before every plan: MTC tasks remove the
+    *        object when they finish.
+    * @return false if the object could not be applied (do not plan in that case)
+    */
+    bool ensureRobotCollisionObject();
+
     // Generic initializers
     virtual void init_action_clients();
     void load_config();
@@ -78,6 +87,13 @@ protected:
     moveit::planning_interface::MoveGroupInterface::Plan plan_;
     moveit_msgs::msg::RobotTrajectory trajectory_;
     bool is_trajectory_;
+
+    // Robot body collision (same object the MTC tasks add)
+    std::unique_ptr<moveit::planning_interface::PlanningSceneInterface> psi_;
+    RobotCollisionConfig robot_collision_;
+    std::string robot_collision_id_ = "boris_robot";
+    std::string robot_collision_frame_ = "link_base";
+    bool enable_robot_collision_ = true;
 
     rclcpp_action::Client<control_msgs::action::GripperCommand>::SharedPtr gripper_action_client_;
 };
