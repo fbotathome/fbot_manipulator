@@ -160,18 +160,19 @@ bool MtcPickAndPlaceTask::buildTask()
             container->insert(std::move(stage));
         }
 
+        // The object may still be touching the support surfaces when it is attached.
+        {
+            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision (object,surface)");
+            stage->allowCollisions(object_id_, object_id_ + "_support", true);
+            stage->allowCollisions(object_id_, object_id_ + "_support_top", true);
+            container->insert(std::move(stage));
+        }
+
         // Attach object
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("attach object");
             stage->attachObject(object_id_, config_.hand_frame);
             attach_object_stage = stage.get();
-            container->insert(std::move(stage));
-        }
-
-        // Allow object-surface collision
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision (object,surface)");
-            stage->allowCollisions(object_id_, config_.surface_link, true);
             container->insert(std::move(stage));
         }
 
@@ -193,7 +194,8 @@ bool MtcPickAndPlaceTask::buildTask()
         // Forbid object-surface collision
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (object,surface)");
-            stage->allowCollisions(object_id_, config_.surface_link, false);
+            stage->allowCollisions(object_id_, object_id_ + "_support", false);
+            stage->allowCollisions(object_id_, object_id_ + "_support_top", false);
             container->insert(std::move(stage));
         }
 
