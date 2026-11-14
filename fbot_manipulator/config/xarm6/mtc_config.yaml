@@ -25,8 +25,8 @@ manipulation_task_server:
       # TODO: PLACEHOLDER VALUES - measure closed_position / min_gap on the real gripper, then
       # set enabled: true.
       grasp_check:
-        enabled: false
+        enabled: true
         topic: "/joint_states"
         finger_joint: "drive_joint"
         closed_position: 0.85     # drive_joint when fully closed on nothing (placeholder)
-        min_gap: 0.02             # min distance from closed_position to count as holding (placeholder)
+        min_gap: 0.01             # min distance from closed_position to count as holding (placeholder)
