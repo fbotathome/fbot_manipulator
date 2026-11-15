@@ -261,17 +261,6 @@ bool MtcPickAndPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
-            // Forbid hand-object collision
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_,
-                                       task_.getRobotModel()
-                                           ->getJointModelGroup(config_.hand_group_name)
-                                           ->getLinkModelNamesWithCollisionGeometry(),
-                                       false);
-                container->insert(std::move(stage));
-            }
-
             // Detach object
             {
                 auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
@@ -312,17 +301,6 @@ bool MtcPickAndPlaceTask::buildTask()
             auto stage = std::make_unique<mtc::stages::MoveTo>("release object", joint_planner_);
             stage->setGroup(config_.hand_group_name);
             stage->setGoal("open");
-            task_.add(std::move(stage));
-        }
-
-        // Forbid hand-object collision
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-            stage->allowCollisions(object_id_,
-                                   task_.getRobotModel()
-                                       ->getJointModelGroup(config_.hand_group_name)
-                                       ->getLinkModelNamesWithCollisionGeometry(),
-                                   false);
             task_.add(std::move(stage));
         }
 

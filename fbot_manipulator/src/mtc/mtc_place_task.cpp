@@ -104,17 +104,6 @@ bool MtcPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
-            // Forbid hand-object collision
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_,
-                                       task_.getRobotModel()
-                                           ->getJointModelGroup(config_.hand_group_name)
-                                           ->getLinkModelNamesWithCollisionGeometry(),
-                                       false);
-                container->insert(std::move(stage));
-            }
-
             // Detach object
             {
                 auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
@@ -158,18 +147,7 @@ bool MtcPlaceTask::buildTask()
             task_.add(std::move(stage));
         }
 
-        // Forbid hand-object collision
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-            stage->allowCollisions(object_id_,
-                                   task_.getRobotModel()
-                                       ->getJointModelGroup(config_.hand_group_name)
-                                       ->getLinkModelNamesWithCollisionGeometry(),
-                                   false);
-            task_.add(std::move(stage));
-        }
-
-         // Detach object
+        // Detach object
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
             stage->detachObject(object_id_, config_.hand_frame);
