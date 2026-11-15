@@ -22,6 +22,9 @@ RobotCollisionConfig loadRobotCollisionConfig(const rclcpp::Node::SharedPtr& nod
     load_box("boris_robot.base", config.base);
     load_box("boris_robot.torso", config.torso);
     load_box("boris_robot.sick", config.sick);
+    load_box("boris_robot.femtobolt", config.femtobolt);
+    load_box("boris_robot.femtobolt_support", config.femtobolt_support);
+    load_box("boris_robot.femtobolt_pan_support", config.femtobolt_pan_support);
     return config;
 }
 
@@ -58,6 +61,9 @@ moveit_msgs::msg::CollisionObject makeRobotCollisionObject(const RobotCollisionC
     add_box(config.base);
     add_box(config.torso);
     add_box(config.sick);
+    add_box(config.femtobolt);
+    add_box(config.femtobolt_support);
+    add_box(config.femtobolt_pan_support);
     return object;
 }
 
