@@ -7,13 +7,13 @@ manipulation_task_server:
       world_frame: "world"
       surface_link: "world"
       persistent_robot_collision: true
-      approach_min: 0.05
+      approach_min: 0.03
       approach_max: 0.15
       lift_min: 0.05
       lift_max: 0.15
       retreat_min: 0.05
       retreat_max: 0.10
-      max_solutions: 5
+      max_solutions: 3
       grasp_angle_delta: 0.262
       pour_angle_delta: 2.095 # 120 degrees in radians
       pour_side_offset: 0.10
