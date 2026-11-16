@@ -268,11 +268,19 @@ bool MtcPickAndPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
+<<<<<<< HEAD
             // Retreat while hand-object collision is still allowed.
             {
                 auto stage = std::make_unique<mtc::stages::MoveRelative>("retreat", cartesian_planner_);
                 stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
                 stage->setMinMaxDistance(0.01, config_.retreat_max);
+=======
+            // Retreat
+            {
+                auto stage = std::make_unique<mtc::stages::MoveRelative>("retreat", cartesian_planner_);
+                stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
+                stage->setMinMaxDistance(config_.retreat_min, config_.retreat_max);
+>>>>>>> 1cc165d8d8931aa1d512f5af42da8997544ce58a
                 stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
                 stage->properties().set("marker_ns", "retreat");
 
@@ -283,6 +291,7 @@ bool MtcPickAndPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
+<<<<<<< HEAD
             // Forbid hand-object collision
             {
                 auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
@@ -294,6 +303,8 @@ bool MtcPickAndPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
+=======
+>>>>>>> 1cc165d8d8931aa1d512f5af42da8997544ce58a
             task_.add(std::move(container));
         }
     }
@@ -319,6 +330,7 @@ bool MtcPickAndPlaceTask::buildTask()
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
             stage->detachObject(object_id_, config_.hand_frame);
+<<<<<<< HEAD
             task_.add(std::move(stage));
         }
 
@@ -345,6 +357,8 @@ bool MtcPickAndPlaceTask::buildTask()
                                        ->getJointModelGroup(config_.hand_group_name)
                                            ->getLinkModelNamesWithCollisionGeometry(),
                                        false);
+=======
+>>>>>>> 1cc165d8d8931aa1d512f5af42da8997544ce58a
             task_.add(std::move(stage));
         }
 
