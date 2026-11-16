@@ -7,8 +7,8 @@ manipulation_task_server:
       world_frame: "world"
       surface_link: "world"
       persistent_robot_collision: true
-      approach_min: 0.03
-      approach_max: 0.15
+      approach_min: 0.04
+      approach_max: 0.17
       lift_min: 0.05
       lift_max: 0.15
       retreat_min: 0.05
