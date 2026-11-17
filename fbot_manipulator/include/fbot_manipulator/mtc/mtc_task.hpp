@@ -120,6 +120,12 @@ public:
     // not actually holding. Safe to call whether or not the object is attached.
     void detachAndRemoveObject(const std::string& object_id);
 
+    // Detach and delete every object still attached to the robot in the planning scene. Called
+    // before a pick, which starts by opening the gripper: anything left attached by an earlier
+    // run (a failed execution, a pick that was never followed by a place) is no longer held and
+    // would otherwise put the start state in collision or distort every later plan.
+    void clearAttachedObjects();
+
     void addRobotCollisionObject();
 
     void removeRobotCollisionObject();

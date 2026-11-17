@@ -148,6 +148,12 @@ private:
             return;
         }
 
+        // A pick opens the gripper first, so nothing attached by an earlier run is still held.
+        const bool is_pick = goal->task_type == ManipulationTaskAction::Goal::PICK ||
+                             goal->task_type == ManipulationTaskAction::Goal::PICK_AND_PLACE;
+        if (is_pick)
+            mtc_task->clearAttachedObjects();
+
         mtc_task->setSurfaceInfo(goal->object_pose, goal->object_size);
         mtc_task->addRobotCollisionObject();
         mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
@@ -212,6 +218,10 @@ private:
         publishFeedback(goal_handle, "Executing", 0.5);
         if (!mtc_task->execute())
         {
+            // A pick that failed part-way may already have attached the object in the planning
+            // scene; a plain world removal does not delete an attached object.
+            if (is_pick)
+                mtc_task->detachAndRemoveObject(object_id);
             cleanup_collision_objects();
             result->success = false;
             result->message = "Execution failed: " + mtc_task->failureReason();

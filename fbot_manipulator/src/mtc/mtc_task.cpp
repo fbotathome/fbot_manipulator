@@ -228,6 +228,23 @@ void MtcTask::detachAndRemoveObject(const std::string& object_id)
     removeCollisionObject(object_id);
 }
 
+void MtcTask::clearAttachedObjects()
+{
+    for (const auto& [id, attached] : psi_.getAttachedObjects())
+    {
+        RCLCPP_WARN(logger(), "[MtcTask:%s] Clearing leftover object '%s' attached to '%s'",
+                    task_name_.c_str(), id.c_str(), attached.link_name.c_str());
+
+        moveit_msgs::msg::AttachedCollisionObject detach;
+        detach.link_name = attached.link_name;
+        detach.object.id = id;
+        detach.object.operation = moveit_msgs::msg::CollisionObject::REMOVE;
+        psi_.applyAttachedCollisionObject(detach);
+
+        removeCollisionObject(id);
+    }
+}
+
 std::string MtcTask::resolveRobotCollisionFrame()
 {
     const std::string& preferred = config_.robot_collision_frame;
