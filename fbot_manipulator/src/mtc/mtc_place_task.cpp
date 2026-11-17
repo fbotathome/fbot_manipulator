@@ -23,6 +23,11 @@ MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
 
 bool MtcPlaceTask::buildTask()
 {
+    if (place_pose_name_.empty())
+        object_pose_ = place_pose_;
+
+    createSupportSurface(object_id_);
+
     task_.stages()->setName("place_" + object_id_);
     task_.loadRobotModel(node_);
 
@@ -104,17 +109,6 @@ bool MtcPlaceTask::buildTask()
                 container->insert(std::move(stage));
             }
 
-            // Forbid hand-object collision
-            {
-                auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-                stage->allowCollisions(object_id_,
-                                       task_.getRobotModel()
-                                           ->getJointModelGroup(config_.hand_group_name)
-                                           ->getLinkModelNamesWithCollisionGeometry(),
-                                       false);
-                container->insert(std::move(stage));
-            }
-
             // Detach object
             {
                 auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
@@ -158,23 +152,42 @@ bool MtcPlaceTask::buildTask()
             task_.add(std::move(stage));
         }
 
-        // Forbid hand-object collision
-        {
-            auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
-            stage->allowCollisions(object_id_,
-                                   task_.getRobotModel()
-                                       ->getJointModelGroup(config_.hand_group_name)
-                                       ->getLinkModelNamesWithCollisionGeometry(),
-                                   false);
-            task_.add(std::move(stage));
-        }
-
+<<<<<<< HEAD
          // Detach object
+=======
+        // Detach object
+>>>>>>> 1cc165d8d8931aa1d512f5af42da8997544ce58a
         {
             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("detach object");
             stage->detachObject(object_id_, config_.hand_frame);
             task_.add(std::move(stage));
         }
+
+         // Retreat while hand-object collision is still allowed.
+         {
+             auto stage = std::make_unique<mtc::stages::MoveRelative>("retreat", cartesian_planner_);
+             stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
+             stage->setMinMaxDistance(0.01, config_.retreat_max);
+             stage->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
+             stage->properties().set("marker_ns", "retreat");
+
+             geometry_msgs::msg::Vector3Stamped vec;
+             vec.header.frame_id = config_.world_frame;
+             vec.vector.z = 1.0;
+             stage->setDirection(vec);
+             task_.add(std::move(stage));
+         }
+
+         // Forbid hand-object collision
+         {
+             auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision (hand,object)");
+             stage->allowCollisions(object_id_,
+                                    task_.getRobotModel()
+                                        ->getJointModelGroup(config_.hand_group_name)
+                                        ->getLinkModelNamesWithCollisionGeometry(),
+                                    false);
+             task_.add(std::move(stage));
+         }
 
          // Remove collision object
         {

@@ -7,13 +7,13 @@ manipulation_task_server:
       world_frame: "world"
       surface_link: "world"
       persistent_robot_collision: true
-      approach_min: 0.01
+      approach_min: 0.02
       approach_max: 0.15
       lift_min: 0.05
       lift_max: 0.15
       retreat_min: 0.05
       retreat_max: 0.10
-      max_solutions: 5
+      max_solutions: 3
       grasp_angle_delta: 0.262
       # PICK only: grasps are generated within +-this angle of the straight-on approach (about 75 deg)
       grasp_angle_half_range: 1.32

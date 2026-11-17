@@ -32,3 +32,30 @@
         offset_x: 0.215030
         offset_y: 0.0
         offset_z: -0.082258
+      femtobolt:
+        # Femto Bolt housing dimensions from fbot_description v2 (meters)
+        size_x: 0.065
+        size_y: 0.115
+        size_z: 0.040
+        # Offset relative to link_base; derived from the v2 neck and arm mount
+        offset_x: -0.057048
+        offset_y: 0.0
+        offset_z: 0.848650
+      femtobolt_support:
+        # Head tilt support collision from fbot_description/urdf/v2/neck.xacro
+        size_x: 0.040
+        size_y: 0.115
+        size_z: 0.065
+        # Same neutral link_base position as the Femto Bolt mount
+        offset_x: -0.057048
+        offset_y: 0.0
+        offset_z: 0.848650
+      femtobolt_pan_support:
+        # Head pan support collision from fbot_description/urdf/v2/neck.xacro
+        size_x: 0.050
+        size_y: 0.050
+        size_z: 0.063
+        # Offset relative to link_base; overlaps the dorso collision
+        offset_x: -0.076073
+        offset_y: 0.0
+        offset_z: 0.777300
