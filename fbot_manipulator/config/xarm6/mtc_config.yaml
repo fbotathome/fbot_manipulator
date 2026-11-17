@@ -7,7 +7,7 @@ manipulation_task_server:
       world_frame: "world"
       surface_link: "world"
       persistent_robot_collision: true
-      approach_min: 0.05
+      approach_min: 0.01
       approach_max: 0.15
       lift_min: 0.05
       lift_max: 0.15
@@ -15,6 +15,11 @@ manipulation_task_server:
       retreat_max: 0.10
       max_solutions: 5
       grasp_angle_delta: 0.262
+      # PICK only: grasps are generated within +-this angle of the straight-on approach (about 75 deg)
+      grasp_angle_half_range: 1.32
+      # PICK only: IK solutions kept per grasp pose, and IK time budget per grasp pose (s)
+      grasp_ik_max_solutions: 2
+      grasp_ik_timeout: 0.2
       pour_angle_delta: 2.095 # 120 degrees in radians
       pour_side_offset: 0.10
       pour_above_offset: 0.15

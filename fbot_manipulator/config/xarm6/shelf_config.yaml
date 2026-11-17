@@ -11,13 +11,13 @@ manipulation_task_server:
         # Extra size of the bottom surface along the object's Y axis.
         y_padding: 0.80
         # Thickness of the bottom collision surface.
-        thickness: 0.05
+        thickness: 0.01
         # X position offset of the bottom surface from the object center.
         x_offset: 0.06
         # Y position offset of the bottom surface from the object center.
         y_offset: 0.0
         # Z position offset of the bottom surface from the object's bottom.
-        z_offset: 0.02
+        z_offset: 0.0
       top:
         # Extra size of the top surface along the object's X axis.
         x_padding: 0.2

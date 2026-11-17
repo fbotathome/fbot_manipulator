@@ -192,7 +192,7 @@ private:
         {
             cleanup_collision_objects();
             result->success = false;
-            result->message = "Planning failed";
+            result->message = "Planning failed: " + mtc_task->failureReason();
             goal_handle->abort(result);
             executing_ = false;
             return;
@@ -214,7 +214,7 @@ private:
         {
             cleanup_collision_objects();
             result->success = false;
-            result->message = "Execution failed";
+            result->message = "Execution failed: " + mtc_task->failureReason();
             goal_handle->abort(result);
             executing_ = false;
             return;

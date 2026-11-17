@@ -1,4 +1,5 @@
 #include "fbot_manipulator/mtc/mtc_pick_task.hpp"
+#include "fbot_manipulator/mtc/facing_grasp_pose_generator.hpp"
 
 namespace fbot_manipulator
 {
@@ -116,19 +117,25 @@ bool MtcPickTask::buildTask()
 
         // Generate Grasp Pose + IK
         {
-            auto stage = std::make_unique<mtc::stages::GenerateGraspPose>("generate grasp pose");
+            // Only approaches from the robot's side of the object, straight-on first.
+            auto stage = std::make_unique<FacingGraspPoseGenerator>("generate grasp pose");
             stage->properties().configureInitFrom(mtc::Stage::PARENT);
             stage->properties().set("marker_ns", "grasp_pose");
             stage->setPreGraspPose("open");
             stage->setObject(object_id_);
             stage->setAngleDelta(config_.grasp_angle_delta);
+            stage->setAngleHalfRange(config_.grasp_angle_half_range);
+            // The arm group's first link sits on the base axis.
+            stage->setReferenceLink(task_.getRobotModel()
+                                        ->getJointModelGroup(config_.arm_group_name)
+                                        ->getLinkModelNames().front());
             stage->setMonitoredStage(grasp_ik_scene);
 
             auto wrapper = std::make_unique<mtc::stages::ComputeIK>("grasp pose IK", std::move(stage));
-            wrapper->setMaxIKSolutions(4);
+            wrapper->setMaxIKSolutions(config_.grasp_ik_max_solutions);
             wrapper->setMinSolutionDistance(0.1);
             wrapper->setIKFrame(config_.grasp_frame_transform, config_.hand_frame);
-            wrapper->setTimeout(1.5);
+            wrapper->setTimeout(config_.grasp_ik_timeout);
             wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
             wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
             container->insert(std::move(wrapper));

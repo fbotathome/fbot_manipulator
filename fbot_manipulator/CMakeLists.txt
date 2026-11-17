@@ -17,6 +17,7 @@ find_package(tl-expected REQUIRED)   # provides tl::expected (linked by moveit_c
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_task_constructor_msgs REQUIRED)
+find_package(rviz_marker_tools REQUIRED)
 find_package(fbot_manipulator_msgs REQUIRED)
 find_package(xarm_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
@@ -63,6 +64,7 @@ target_link_libraries(manipulator_interface_node yaml-cpp)
 add_executable(manipulation_task_server
   src/manipulation_task_server.cpp
   src/mtc/mtc_task.cpp
+  src/mtc/facing_grasp_pose_generator.cpp
   src/mtc/mtc_pick_task.cpp
   src/mtc/mtc_place_task.cpp
   src/mtc/mtc_pick_and_place_task.cpp
@@ -80,6 +82,7 @@ ament_target_dependencies(manipulation_task_server
   tf2_geometry_msgs
   tf2_eigen
   tf2_ros
+  rviz_marker_tools
   fbot_manipulator_msgs
   sensor_msgs
 )

@@ -11,6 +11,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <moveit_msgs/msg/planning_scene.hpp>
+#include <moveit_msgs/srv/get_planning_scene.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp>)
@@ -73,6 +74,12 @@ struct MtcConfig
     double retreat_max = 0.15;
     int max_solutions = 5;
     double grasp_angle_delta = M_PI / 4;
+    // Grasps are generated within +-grasp_angle_half_range of the straight-on approach.
+    double grasp_angle_half_range = 1.32;  // about 75 degrees
+    // Grasp IK: solutions kept per grasp pose, and time budget per grasp pose (s). With more
+    // than one solution requested the IK stage uses the whole budget unless it finds them all.
+    int grasp_ik_max_solutions = 2;
+    double grasp_ik_timeout = 0.2;
     double pour_angle_delta = M_PI / 2;
     double pour_side_offset = 0.10;
     double pour_above_offset = 0.15;
@@ -148,8 +155,22 @@ public:
 
     std::string name() const { return task_name_; }
 
+    // One-line explanation of the last plan() or execute() failure; empty if none.
+    const std::string& failureReason() const { return failure_reason_; }
+
 protected:
     void setupSolvers();
+
+    // Diagnostics only: returns the colliding pairs ("a <-> b, ...") if the current robot state
+    // is in collision in move_group's planning scene, or an empty string.
+    std::string checkStartStateCollision();
+
+    // Logs, per stage, how many candidates succeeded and failed and why, and returns a one-line
+    // summary of the stages that rejected every candidate.
+    std::string describePlanningFailure();
+
+    std::string failure_reason_;
+    rclcpp::Client<moveit_msgs::srv::GetPlanningScene>::SharedPtr get_planning_scene_client_;
 
     std::string task_name_;
     rclcpp::Node::SharedPtr node_;

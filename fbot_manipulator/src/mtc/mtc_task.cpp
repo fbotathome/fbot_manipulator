@@ -2,11 +2,46 @@
 #include <moveit_msgs/msg/planning_scene.hpp>
 #include <moveit_msgs/msg/attached_collision_object.hpp>
 
+#include <moveit/collision_detection/collision_common.h>
+#include <moveit/planning_scene/planning_scene.h>
+
+#include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <map>
+#include <sstream>
+#include <vector>
 
 namespace fbot_manipulator
 {
+
+namespace
+{
+// Collapse a multi-line message into one line and cap its length, for logs and action results.
+std::string oneLine(std::string text, std::size_t max_length = 200)
+{
+    std::replace(text.begin(), text.end(), '\n', ' ');
+    if (text.size() > max_length)
+        text = text.substr(0, max_length) + "...";
+    return text;
+}
+
+// Failure comment without the leading grasp angle the IK stage copies from the generator
+// ("-0.26 no IK found"), so identical reasons are counted together.
+std::string failureReasonOf(const std::string& comment)
+{
+    std::size_t parsed = 0;
+    try {
+        std::stod(comment, &parsed);
+    } catch (const std::exception&) {
+        parsed = 0;
+    }
+    const std::size_t start = comment.find_first_not_of(' ', parsed);
+    if (start == std::string::npos)
+        return parsed ? "(no reason given)" : (comment.empty() ? "(no reason given)" : comment);
+    return comment.substr(start);
+}
+} // namespace
 
 MtcTask::MtcTask(const std::string& task_name,
                  rclcpp::Node::SharedPtr node)
@@ -40,6 +75,9 @@ void MtcTask::loadConfig()
     load_parameter("mtc.retreat_max", config_.retreat_max);
     load_parameter("mtc.max_solutions", config_.max_solutions);
     load_parameter("mtc.grasp_angle_delta", config_.grasp_angle_delta);
+    load_parameter("mtc.grasp_angle_half_range", config_.grasp_angle_half_range);
+    load_parameter("mtc.grasp_ik_max_solutions", config_.grasp_ik_max_solutions);
+    load_parameter("mtc.grasp_ik_timeout", config_.grasp_ik_timeout);
     load_parameter("mtc.pour_angle_delta", config_.pour_angle_delta);
     load_parameter("mtc.pour_wait_time", config_.pour_wait_time);
     load_parameter("mtc.pour_side_offset", config_.pour_side_offset);
@@ -564,23 +602,139 @@ void MtcTask::removeSupportSurface(const std::string& object_id)
                 task_name_.c_str(), object_id.c_str());
 }
 
+std::string MtcTask::checkStartStateCollision()
+{
+    const auto robot_model = task_.getRobotModel();
+    if (!robot_model)
+        return {};
+
+    if (!get_planning_scene_client_)
+        get_planning_scene_client_ =
+            node_->create_client<moveit_msgs::srv::GetPlanningScene>("get_planning_scene");
+    if (!get_planning_scene_client_->wait_for_service(std::chrono::seconds(2)))
+    {
+        RCLCPP_WARN(logger(), "[MtcTask:%s] Start state check skipped: get_planning_scene unavailable",
+                    task_name_.c_str());
+        return {};
+    }
+
+    using Components = moveit_msgs::msg::PlanningSceneComponents;
+    auto request = std::make_shared<moveit_msgs::srv::GetPlanningScene::Request>();
+    request->components.components =
+        Components::SCENE_SETTINGS | Components::ROBOT_STATE | Components::ROBOT_STATE_ATTACHED_OBJECTS |
+        Components::WORLD_OBJECT_NAMES | Components::WORLD_OBJECT_GEOMETRY | Components::OCTOMAP |
+        Components::TRANSFORMS | Components::ALLOWED_COLLISION_MATRIX | Components::LINK_PADDING_AND_SCALING;
+
+    // The node is spun by the server's executor, so the response arrives while this thread waits.
+    auto future = get_planning_scene_client_->async_send_request(request);
+    if (future.wait_for(std::chrono::seconds(3)) != std::future_status::ready)
+    {
+        get_planning_scene_client_->remove_pending_request(future);
+        RCLCPP_WARN(logger(), "[MtcTask:%s] Start state check skipped: get_planning_scene timed out",
+                    task_name_.c_str());
+        return {};
+    }
+
+    planning_scene::PlanningScene scene(robot_model);
+    scene.setPlanningSceneMsg(future.get()->scene);
+
+    collision_detection::CollisionRequest collision_request;
+    collision_request.contacts = true;
+    collision_request.max_contacts = 20;
+    collision_request.max_contacts_per_pair = 1;
+    collision_detection::CollisionResult collision_result;
+    scene.checkCollision(collision_request, collision_result);
+    if (!collision_result.collision)
+        return {};
+
+    std::string pairs;
+    for (const auto& contact : collision_result.contacts)
+    {
+        if (!pairs.empty()) pairs += ", ";
+        pairs += contact.first.first + " <-> " + contact.first.second;
+    }
+    RCLCPP_ERROR(logger(), "[MtcTask:%s] Start state is in collision: %s",
+                 task_name_.c_str(), pairs.c_str());
+    return pairs;
+}
+
+std::string MtcTask::describePlanningFailure()
+{
+    std::ostringstream explanation;
+    if (task_.explainFailure(explanation) && !explanation.str().empty())
+        RCLCPP_ERROR(logger(), "[MtcTask:%s] %s", task_name_.c_str(), oneLine(explanation.str(), 500).c_str());
+
+    // Stages that rejected every candidate. A stage with no solutions and no failures was only
+    // starved by one of these.
+    std::vector<std::string> blockers;
+
+    RCLCPP_ERROR(logger(), "[MtcTask:%s] Per-stage result (solutions / failures):", task_name_.c_str());
+    task_.stages()->traverseRecursively([&](const mtc::Stage& stage, unsigned int depth) {
+        const std::size_t num_solutions = stage.solutions().size();
+        const std::size_t num_failures = stage.numFailures();
+        RCLCPP_ERROR(logger(), "[MtcTask:%s] %s%s: %zu / %zu", task_name_.c_str(),
+                     std::string(2 * depth, ' ').c_str(), stage.name().c_str(), num_solutions, num_failures);
+
+        std::map<std::string, std::size_t> counts;
+        for (const auto& failure : stage.failures())
+            ++counts[failureReasonOf(failure->comment())];
+        std::vector<std::pair<std::string, std::size_t>> reasons(counts.begin(), counts.end());
+        std::sort(reasons.begin(), reasons.end(),
+                  [](const auto& a, const auto& b) { return a.second > b.second; });
+        for (std::size_t i = 0; i < reasons.size() && i < 3; ++i)
+            RCLCPP_ERROR(logger(), "[MtcTask:%s] %s  %zux %s", task_name_.c_str(),
+                         std::string(2 * depth, ' ').c_str(), reasons[i].second,
+                         oneLine(reasons[i].first).c_str());
+
+        if (num_solutions == 0 && num_failures > 0)
+        {
+            std::string blocker = stage.name() + ": " + std::to_string(num_failures) + " failed";
+            if (!reasons.empty())
+                blocker += " (" + oneLine(reasons.front().first, 120) + ")";
+            blockers.push_back(blocker);
+        }
+        return true;
+    });
+
+    if (blockers.empty())
+        return "no stage reported a failure reason";
+
+    std::string summary;
+    for (std::size_t i = 0; i < blockers.size() && i < 3; ++i)
+        summary += (i ? "; " : "") + blockers[i];
+    return summary;
+}
+
 bool MtcTask::plan()
 {
+    failure_reason_.clear();
+
     try
     {
         task_.init();
     }
     catch (mtc::InitStageException& e)
     {
+        // what() is a generic sentence; streaming the exception lists each stage and its error.
+        std::ostringstream details;
+        details << e;
+        failure_reason_ = "init failed: " + oneLine(details.str(), 400);
         RCLCPP_ERROR(logger(), "[MtcTask:%s] Init failed: %s",
-                     task_name_.c_str(), e.what());
+                     task_name_.c_str(), details.str().c_str());
         return false;
     }
+
+    const std::string start_collision = checkStartStateCollision();
 
     if (!task_.plan(config_.max_solutions))
     {
         RCLCPP_ERROR(logger(), "[MtcTask:%s] Planning failed", task_name_.c_str());
         task_.printState();
+        failure_reason_ = describePlanningFailure();
+        if (!start_collision.empty())
+            failure_reason_ = "start state in collision (" + oneLine(start_collision, 150) + "); " + failure_reason_;
+        RCLCPP_ERROR(logger(), "[MtcTask:%s] Planning failed: %s",
+                     task_name_.c_str(), failure_reason_.c_str());
         return false;
     }
 
@@ -591,8 +745,11 @@ bool MtcTask::plan()
 
 bool MtcTask::execute()
 {
+    failure_reason_.clear();
+
     if (task_.solutions().empty())
     {
+        failure_reason_ = "no solutions to execute";
         RCLCPP_ERROR(logger(), "[MtcTask:%s] No solutions to execute", task_name_.c_str());
         return false;
     }
@@ -600,6 +757,7 @@ bool MtcTask::execute()
     auto result = task_.execute(*task_.solutions().front());
     if (result.val != moveit_msgs::msg::MoveItErrorCodes::SUCCESS)
     {
+        failure_reason_ = "MoveIt error code " + std::to_string(result.val);
         RCLCPP_ERROR(logger(), "[MtcTask:%s] Execution failed with error code %d",
                      task_name_.c_str(), result.val);
         return false;
