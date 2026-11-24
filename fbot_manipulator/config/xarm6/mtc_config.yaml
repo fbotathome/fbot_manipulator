@@ -10,7 +10,7 @@ manipulation_task_server:
       approach_min: 0.02
       approach_max: 0.15
       lift_min: 0.05
-      lift_max: 0.15
+      lift_max: 0.07
       retreat_min: 0.05
       retreat_max: 0.10
       max_solutions: 3
@@ -18,13 +18,13 @@ manipulation_task_server:
       # PICK only: grasps are generated within +-this angle of the straight-on approach (about 75 deg)
       grasp_angle_half_range: 1.32
       # PICK only: IK solutions kept per grasp pose, and IK time budget per grasp pose (s)
-      grasp_ik_max_solutions: 2
+      grasp_ik_max_solutions: 4
       grasp_ik_timeout: 0.2
       pour_angle_delta: 2.095 # 120 degrees in radians
       pour_side_offset: 0.10
       pour_above_offset: 0.15
       pour_wait_time: 2.0
-      grasp_offset: -0.02
+      grasp_offset: -0.05
       # Post-pick grasp check: after a PICK, abort if the gripper joint stopped within min_gap of
       # closed_position (closed on nothing).
       # TODO: PLACEHOLDER VALUES - measure closed_position / min_gap on the real gripper, then
