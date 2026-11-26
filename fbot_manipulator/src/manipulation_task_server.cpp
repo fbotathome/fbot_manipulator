@@ -154,9 +154,22 @@ private:
         if (is_pick)
             mtc_task->clearAttachedObjects();
 
-        mtc_task->setSurfaceInfo(goal->object_pose, goal->object_size);
+        // A place starts with the object already in the gripper (attached in the planning scene).
+        // The goal carries no pose/size for it, so keep the attached body instead of re-adding a
+        // zero-size world object with the same id, and size the shelf surface from the held box.
+        geometry_msgs::msg::Vector3 object_size = goal->object_size;
+        const bool is_place = goal->task_type == ManipulationTaskAction::Goal::PLACE;
+        const bool holding_object = is_place && mtc_task->getAttachedObjectSize(object_id, object_size);
+        if (holding_object && goal->object_size.x == 0.0 && goal->object_size.y == 0.0 && goal->object_size.z == 0.0)
+            RCLCPP_INFO(get_logger(), "Placing held object '%s' (%.3f x %.3f x %.3f)", object_id.c_str(),
+                        object_size.x, object_size.y, object_size.z);
+        else if (holding_object)
+            object_size = goal->object_size;
+
+        mtc_task->setSurfaceInfo(goal->object_pose, object_size);
         mtc_task->addRobotCollisionObject();
-        mtc_task->addCollisionObject(object_id, goal->object_pose, goal->object_size);
+        if (!holding_object)
+            mtc_task->addCollisionObject(object_id, goal->object_pose, object_size);
 
         auto cleanup_collision_objects = [&]() {
             mtc_task->removeCollisionObject(object_id);

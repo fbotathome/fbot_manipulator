@@ -43,6 +43,25 @@ bool MtcPlaceTask::buildTask()
         task_.add(std::move(stage));
     }
 
+    // The object in the gripper is the one being placed, so it is allowed to touch the hand, the
+    // arm and the shelf it is lowered onto. Without this the start state is already "in collision"
+    // (attached object vs fingers) and the place aborts before planning.
+    {
+        std::vector<std::string> held_links = task_.getRobotModel()
+                                                  ->getJointModelGroup(config_.arm_group_name)
+                                                  ->getLinkModelNamesWithCollisionGeometry();
+        const auto& hand_links = task_.getRobotModel()
+                                     ->getJointModelGroup(config_.hand_group_name)
+                                     ->getLinkModelNamesWithCollisionGeometry();
+        held_links.insert(held_links.end(), hand_links.begin(), hand_links.end());
+
+        auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision (held object)");
+        stage->allowCollisions(object_id_, held_links, true);
+        for (const char* suffix : { "_support", "_support_top", "_support_right", "_support_left" })
+            stage->allowCollisions(object_id_, object_id_ + suffix, true);
+        task_.add(std::move(stage));
+    }
+
     if (place_pose_name_.empty())
     {
         // ---- Move to Place (Connect) ----

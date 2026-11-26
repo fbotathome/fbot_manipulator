@@ -245,6 +245,21 @@ void MtcTask::clearAttachedObjects()
     }
 }
 
+bool MtcTask::getAttachedObjectSize(const std::string& object_id, geometry_msgs::msg::Vector3& size)
+{
+    const auto attached = psi_.getAttachedObjects({ object_id });
+    const auto it = attached.find(object_id);
+    if (it == attached.end() || it->second.object.primitives.empty() ||
+        it->second.object.primitives[0].dimensions.size() < 3)
+        return false;
+
+    const auto& dims = it->second.object.primitives[0].dimensions;
+    size.x = dims[0];
+    size.y = dims[1];
+    size.z = dims[2];
+    return true;
+}
+
 std::string MtcTask::resolveRobotCollisionFrame()
 {
     const std::string& preferred = config_.robot_collision_frame;

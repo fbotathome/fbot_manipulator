@@ -126,6 +126,9 @@ public:
     // would otherwise put the start state in collision or distort every later plan.
     void clearAttachedObjects();
 
+    // If object_id is attached to the robot as a box, return true and its dimensions in `size`.
+    bool getAttachedObjectSize(const std::string& object_id, geometry_msgs::msg::Vector3& size);
+
     void addRobotCollisionObject();
 
     void removeRobotCollisionObject();

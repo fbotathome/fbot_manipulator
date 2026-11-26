@@ -221,7 +221,7 @@ bool MtcPickTask::buildTask()
     {
         auto stage = std::make_unique<mtc::stages::MoveTo>("return home", pipeline_planner_);
         stage->setGroup(config_.arm_group_name);
-        stage->setGoal("HoldUpLeft");
+        stage->setGoal("HoldBagHigh");
         task_.add(std::move(stage));
     }
 
