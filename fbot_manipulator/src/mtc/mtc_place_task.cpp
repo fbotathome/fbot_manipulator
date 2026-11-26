@@ -23,10 +23,15 @@ MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
 
 bool MtcPlaceTask::buildTask()
 {
+    // Only a Cartesian place has a known target to put a shelf under. A named (SRDF) place has no
+    // target pose: object_pose_ would still hold the goal's object_pose (often the old pick pose),
+    // and since world is fixed to the robot that would recreate a phantom support where the object
+    // was picked, in front of the arm.
     if (place_pose_name_.empty())
+    {
         object_pose_ = place_pose_;
-
-    createSupportSurface(object_id_);
+        createSupportSurface(object_id_);
+    }
 
     task_.stages()->setName("place_" + object_id_);
     task_.loadRobotModel(node_);
