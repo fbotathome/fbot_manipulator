@@ -347,6 +347,13 @@ void MtcTask::setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
     has_surface_info_ = true;
 }
 
+geometry_msgs::msg::Pose MtcTask::handPoseToGraspTarget(const geometry_msgs::msg::Pose& hand_pose) const
+{
+    Eigen::Isometry3d hand = Eigen::Isometry3d::Identity();
+    tf2::fromMsg(hand_pose, hand);
+    return tf2::toMsg(hand * config_.grasp_frame_transform);
+}
+
 void MtcTask::createSupportSurface(const std::string& object_id)
 {
     if (!config_.enable_surfaces) return;

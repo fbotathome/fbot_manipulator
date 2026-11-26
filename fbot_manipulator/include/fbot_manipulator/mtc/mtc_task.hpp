@@ -136,6 +136,14 @@ public:
     void setSurfaceInfo(const geometry_msgs::msg::Pose& pose,
                         const geometry_msgs::msg::Vector3& size);
 
+    // A goal's place_pose is a recorded hand pose: the hand_frame (link_tcp) pose saved by
+    // fbot_world's place_pose_writer. Place IK moves the grasp frame
+    // (hand_frame * grasp_frame_transform), whose axes are rotated from hand_frame's (its x is
+    // the approach, its z is up), so the recorded pose has to be re-expressed as that frame's
+    // target: IK then brings hand_frame back exactly onto the recorded pose. The returned origin
+    // is where the held object's center ends up (the grasp frame sits on it during the pick).
+    geometry_msgs::msg::Pose handPoseToGraspTarget(const geometry_msgs::msg::Pose& hand_pose) const;
+
 
     // Functions to add and remove the collision surfaces
     void createSupportSurface(const std::string& object_id);

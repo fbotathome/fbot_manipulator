@@ -239,7 +239,9 @@ bool MtcPickAndPlaceTask::buildTask()
 
                 geometry_msgs::msg::PoseStamped target;
                 target.header.frame_id = config_.world_frame;
-                target.pose = place_pose_;
+                // place_pose is the recorded hand pose; IK aligns the rotated grasp frame, so
+                // convert it (see MtcTask::handPoseToGraspTarget).
+                target.pose = handPoseToGraspTarget(place_pose_);
                 stage->setPose(target);
                 stage->setMonitoredStage(attach_object_stage);
 

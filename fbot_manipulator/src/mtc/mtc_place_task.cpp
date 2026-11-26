@@ -24,12 +24,23 @@ MtcPlaceTask::MtcPlaceTask(rclcpp::Node::SharedPtr node,
 bool MtcPlaceTask::buildTask()
 {
     // Only a Cartesian place has a known target to put a shelf under. A named (SRDF) place has no
-    // target pose: object_pose_ would still hold the goal's object_pose (often the old pick pose),
-    // and since world is fixed to the robot that would recreate a phantom support where the object
-    // was picked, in front of the arm.
+    // target pose: the goal's object_pose is blank for a place, so a support would land at the
+    // world origin, right at the arm's base.
+    geometry_msgs::msg::Pose place_target;
     if (place_pose_name_.empty())
     {
-        object_pose_ = place_pose_;
+        // place_pose is the recorded hand pose; IK aligns the rotated grasp frame, so convert it.
+        // Using it unconverted turns the hand ~90 deg (a horizontal recording points the gripper
+        // straight up, driving link_eef into the support below the object).
+        place_target = handPoseToGraspTarget(place_pose_);
+        RCLCPP_INFO(logger(),
+                    "[MtcTask:%s] Recorded hand pose (%.3f, %.3f, %.3f) -> object target (%.3f, %.3f, %.3f)",
+                    task_name_.c_str(), place_pose_.position.x, place_pose_.position.y,
+                    place_pose_.position.z, place_target.position.x, place_target.position.y,
+                    place_target.position.z);
+
+        // The target origin is where the held object's center goes, so the shelf goes under it.
+        object_pose_ = place_target;
         createSupportSurface(object_id_);
     }
 
@@ -111,7 +122,7 @@ bool MtcPlaceTask::buildTask()
 
                 geometry_msgs::msg::PoseStamped target;
                 target.header.frame_id = config_.world_frame;
-                target.pose = place_pose_;
+                target.pose = place_target;
                 stage->setPose(target);
                 stage->setMonitoredStage(attach_object_stage);
 
